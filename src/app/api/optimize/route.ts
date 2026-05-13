@@ -35,8 +35,11 @@ ESEMPI OBBLIGATORI DI REBRANDING:
 REGOLA N.2 - LA DESCRIZIONE COMANDA:
 Leggi la descrizione per capire il vero livello. Se l'utente gestiva processi complessi e team, usa "Manager" o "Lead", anche se il titolo originale era "Specialist".
 
-REGOLA N.3 - NO CLONING:
-Non copiare esattamente "${jobTitle}", usa varianti (es. se l'annuncio è PM, usa "Project Lead").
+REGOLA N.3 - DIVIETO DI COPIA 1:1 (FONDAMENTALE):
+È SEVERAMENTE VIETATO che un titolo passato sia IDENTICO al titolo dell'annuncio target ("${jobTitle}"). 
+- Se l'annuncio è "Technical Project Manager", usa sinonimi come: "IT Project Lead", "Digital Delivery Manager", "Solutions Implementation Lead", "Senior Technical Specialist".
+- Usa varianti che suggeriscano competenza ma mantengano una distinzione formale.
+- Un titolo 1:1 è considerato un errore grave e sospetto.
 
 RISPONDI SOLO IN JSON.`;
 
