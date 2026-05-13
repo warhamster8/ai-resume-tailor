@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { baseData, jobTitle, jobDescription, targetLanguage } = await req.json();
+    const { baseData, jobTitle, jobDescription, targetLanguage, refinement } = await req.json();
 
     const experienceWithIndex = baseData.experience.map((exp: any, i: number) => ({
       index: i,
@@ -18,48 +18,38 @@ export async function POST(req: Request) {
       originalDescription: exp.description,
     }));
 
-    const systemPrompt = `MANDATO LINGUISTICO SUPREMO: DEVI SCRIVERE TUTTO ESCLUSIVAMENTE IN LINGUA ${targetLanguage.toUpperCase()}.
-NON IMPORTA in che lingua sia scritto l'annuncio di lavoro o i dati originali: la lingua finale deve essere SOLO ${targetLanguage.toUpperCase()}.
+    let systemPrompt = `MANDATO LINGUISTICO SUPREMO: DEVI SCRIVERE TUTTO ESCLUSIVAMENTE IN LINGUA ${targetLanguage.toUpperCase()}.
 
 Sei un Senior Executive Recruiter esperto in ottimizzazione ATS. Ottimizza il CV per "${jobTitle}".
 
-LOGICA REBRANDING TITOLI (MERCATO INTERNAZIONALE):
-1. TRADUZIONE STANDARD: Traduci i titoli interni criptici in ruoli standard di mercato riconosciuti.
+LOGICA REBRANDING TITOLI:
+1. TRADUZIONE STANDARD: Traduci i titoli interni in ruoli standard di mercato.
 2. DIVIETO CLONING: È VIETATO copiare esattamente il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi professionali.
-3. COERENZA: Il nuovo titolo deve riflettere le responsabilità reali in lingua ${targetLanguage.toUpperCase()}.
+3. VARIAZIONI: Se l'utente chiede raffinamenti, fornisci alternative diverse da quelle precedenti.
 
 REGOLE CONTENUTO:
-- LIVELLI SKILL REALISTICI (Mix di Intermediate, Advanced, Expert).
+- LIVELLI SKILL REALISTICI.
 - Includi sempre "AI-Assisted Development / Vibe-Coding".
-- NO CERTIFICAZIONI FALSE.
+- NO CERTIFICAZIONI FALSE.`;
 
-IMPORTANTE: Ogni campo di testo restituito nel JSON deve essere rigorosamente in ${targetLanguage.toUpperCase()}.`;
+    if (refinement) {
+      systemPrompt += `\n\nRICHIESTA DI RAFFINAMENTO: L'utente ha già una versione ottimizzata ma vuole apportare questa modifica specifica: "${refinement}". Applica questa modifica mantenendo il resto del CV coerente.`;
+    }
 
     const userPrompt = `
-    LINGUA RICHIESTA: ${targetLanguage.toUpperCase()} (Ignora ogni altra lingua presente)
+    LINGUA RICHIESTA: ${targetLanguage.toUpperCase()}
     Job Target: ${jobTitle}
-    Job Description (per contesto): ${jobDescription}
     Dati Base CV: ${JSON.stringify(baseData)}
     Esperienze da ottimizzare: ${JSON.stringify(experienceWithIndex)}
+    ${refinement ? `COMANDO UTENTE: ${refinement}` : ""}
     
-    STRUTTURA JSON OBBLIGATORIA (TUTTI I CAMPI IN ${targetLanguage.toUpperCase()}):
+    STRUTTURA JSON OBBLIGATORIA:
     {
-      "personalInfo": { 
-        "summary": "Sommario ottimizzato", 
-        "originalSummary": "...", 
-        "changeReason": "..." 
-      },
+      "personalInfo": { "summary": "...", "originalSummary": "...", "changeReason": "..." },
       "experience": [
-        { 
-          "index": 0, 
-          "newPosition": "Titolo Standard di Mercato (NO CLONE)", 
-          "originalPosition": "...", 
-          "newDescription": "Descrizione ottimizzata", 
-          "originalDescription": "...", 
-          "changeReason": "..." 
-        }
+        { "index": 0, "newPosition": "...", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
       ],
-      "skills": [ { "name": "Skill", "level": "Level" } ],
+      "skills": [ { "name": "...", "level": "..." } ],
       "atsScore": 85
     }`;
 
@@ -76,7 +66,7 @@ IMPORTANTE: Ogni campo di testo restituito nel JSON deve essere rigorosamente in
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.2, // Ridotta per massima aderenza alle istruzioni linguistiche
+        temperature: refinement ? 0.4 : 0.2, // Più flessibilità se stiamo chiedendo varianti
       }),
     });
 
@@ -121,7 +111,7 @@ IMPORTANTE: Ogni campo di testo restituito nel JSON deve essere rigorosamente in
     });
 
   } catch (error) {
-    console.error("Optimization Error:", error);
-    return NextResponse.json({ message: "Errore durante l'ottimizzazione linguistica." }, { status: 500 });
+    console.error("Refinement Error:", error);
+    return NextResponse.json({ message: "Errore durante il raffinamento." }, { status: 500 });
   }
 }

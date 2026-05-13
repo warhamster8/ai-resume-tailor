@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ResumeData, OptimizedResumeData } from '@/types/resume';
-import { Loader2, Wand2, FileText, CheckCircle2, AlertCircle, Building2 } from 'lucide-react';
 import ResumePreview from '@/components/pdf/ResumePreview';
+import { useRouter } from 'next/navigation';
 
 export default function OptimizePage() {
+  const router = useRouter();
   const [baseCV, setBaseCV] = useState<ResumeData | null>(null);
   const [jobTitle, setJobTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -14,41 +15,42 @@ export default function OptimizePage() {
   const [language, setLanguage] = useState<'it' | 'en'>('it');
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedData, setOptimizedData] = useState<OptimizedResumeData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [refinementLoading, setRefinementLoading] = useState(false);
 
   useEffect(() => {
-    // Controlla se arriviamo dalla dashboard per vedere un CV specifico
-    const cachedCV = localStorage.getItem('preview_cv');
-    if (cachedCV) {
-      setOptimizedData(JSON.parse(cachedCV));
-      localStorage.removeItem('preview_cv'); // Pulizia
-    }
-
-    async function fetchBaseCV() {
+    async function loadBaseCV() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('cv_history')
         .select('base_cv_data')
         .eq('user_id', user.id)
         .eq('is_base', true)
         .single();
 
-      if (data) setBaseCV(data.base_cv_data);
+      if (data) {
+        setBaseCV(data.base_cv_data);
+      } else if (fetchError) {
+        console.error('Error loading base CV:', fetchError);
+      }
     }
-    fetchBaseCV();
-  }, []);
+    loadBaseCV();
+  }, [router]);
 
   const handleOptimize = async () => {
-    if (!baseCV || !jobTitle || !companyName || !jobDescription) {
-      setError('Inserisci il Ruolo, l\'Azienda e la Job Description per continuare.');
+    if (!baseCV || !jobTitle || !jobDescription) {
+      alert('Compila tutti i campi prima di ottimizzare');
       return;
     }
 
     setIsOptimizing(true);
-    setError(null);
-
+    setError('');
+    
     try {
       const response = await fetch('/api/optimize', {
         method: 'POST',
@@ -68,11 +70,9 @@ export default function OptimizePage() {
 
       const data = await response.json();
       
-      // Salvataggio automatico nella cronologia
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log('Tentativo di salvataggio ottimizzazione per utente:', user.id);
-        const { error: saveError } = await supabase.from('cv_history').insert([
+        await supabase.from('cv_history').insert([
           {
             user_id: user.id,
             base_cv_data: baseCV,
@@ -82,135 +82,163 @@ export default function OptimizePage() {
             is_base: false
           }
         ]);
-
-        if (saveError) {
-          console.error('ERRORE SUPABASE DURANTE IL SALVATAGGIO:', saveError);
-          // Se l'errore è un "duplicate key", conferma la mia teoria sul vincolo UNIQUE
-          if (saveError.code === '23505') {
-            alert('Errore Database: Il sistema permette solo una ottimizzazione. Esegui il comando SQL che ti ho fornito per sbloccare la cronologia.');
-          } else {
-            alert(`Errore salvataggio: ${saveError.message}`);
-          }
-        } else {
-          console.log('Ottimizzazione salvata con successo!');
-        }
       }
 
       setOptimizedData(data);
 
     } catch (err: any) {
-      console.error('Optimization error:', err);
-      setError(err.message || 'Si è verificato un errore con l\'IA. Riprova tra poco.');
+      setError(err.message || 'Errore IA. Riprova tra poco.');
     } finally {
       setIsOptimizing(false);
     }
   };
 
-  if (!baseCV) return (
-    <div className="max-w-4xl mx-auto py-20 text-center">
-      <AlertCircle className="w-12 h-12 mx-auto text-yellow-500 mb-4" />
-      <h2 className="text-2xl font-bold">Nessun CV Base trovato</h2>
-      <p className="text-secondary mt-2">Prima di ottimizzare, devi creare il tuo CV base nell'editor.</p>
-      <a href="/editor" className="btn-primary inline-block mt-6">Vai all'Editor</a>
-    </div>
-  );
+  const handleRefine = async (command: string) => {
+    if (!optimizedData) return;
+    setRefinementLoading(true);
+    try {
+      const response = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          baseData: optimizedData, 
+          jobTitle, 
+          jobDescription,
+          targetLanguage: language === 'it' ? 'ITALIANO' : 'INGLESE',
+          refinement: command
+        }),
+      });
 
-  if (optimizedData) {
-    return <ResumePreview data={optimizedData} />;
+      const data = await response.json();
+      setOptimizedData(data);
+    } catch (err) {
+      console.error('Refinement error:', err);
+    } finally {
+      setRefinementLoading(false);
+    }
+  };
+
+  if (!baseCV) {
+    return (
+      <div className="p-8 max-w-2xl mx-auto text-center">
+        <h1 className="text-2xl font-bold mb-4">Manca il CV Base</h1>
+        <p className="text-gray-600 mb-6">Devi caricare il tuo CV principale nella Dashboard prima di ottimizzarlo.</p>
+        <button onClick={() => router.push('/dashboard')} className="bg-blue-600 text-white px-6 py-2 rounded-lg">Vai alla Dashboard</button>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4 space-y-8">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ottimizza il tuo CV</h1>
-          <p className="text-secondary mt-2">Personalizza il tuo CV per una specifica azienda e posizione.</p>
-        </div>
+    <div className="min-h-screen bg-slate-50 p-6 md:p-12">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
         
-        {/* Selettore Lingua */}
-        <div className="flex items-center gap-2 bg-muted p-1 rounded-xl border border-border shadow-sm">
-          <button
-            onClick={() => setLanguage('it')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${language === 'it' ? 'bg-white shadow-sm text-accent' : 'text-secondary hover:text-foreground'}`}
-          >
-            🇮🇹 ITA
-          </button>
-          <button
-            onClick={() => setLanguage('en')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${language === 'en' ? 'bg-white shadow-sm text-accent' : 'text-secondary hover:text-foreground'}`}
-          >
-            🇬🇧 ENG
-          </button>
-        </div>
-      </div>
+        {/* Sinistra: Form Input */}
+        <div className="space-y-8">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h1 className="text-3xl font-bold text-slate-900 mb-6">Target Positioning</h1>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Azienda</label>
+                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="es. Google, Ferrari" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Ruolo Target</label>
+                  <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="es. Senior Project Manager" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
+                </div>
+              </div>
 
-      <div className="crisp-card p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-bold flex items-center gap-2">
-              <Wand2 className="w-4 h-4 text-accent" /> Ruolo Target
-            </label>
-            <input
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              className="w-full p-3 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent"
-              placeholder="E.g. Senior Project Manager..."
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Lingua di Output</label>
+                <div className="flex gap-4">
+                  <button onClick={() => setLanguage('it')} className={`flex-1 py-3 rounded-xl border transition-all ${language === 'it' ? 'bg-blue-50 border-blue-500 text-blue-700 font-bold' : 'bg-white border-slate-200 text-slate-600'}`}>Italiano 🇮🇹</button>
+                  <button onClick={() => setLanguage('en')} className={`flex-1 py-3 rounded-xl border transition-all ${language === 'en' ? 'bg-blue-50 border-blue-500 text-blue-700 font-bold' : 'bg-white border-slate-200 text-slate-600'}`}>English 🇬🇧</button>
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-accent" /> Azienda
-            </label>
-            <input
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full p-3 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent"
-              placeholder="E.g. Ferrari, Google, Amazon..."
-            />
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Job Description (copia e incolla)</label>
+                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={8} className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm" placeholder="Incolla qui il testo dell'annuncio di lavoro per permettere all'IA di analizzarlo..." />
+              </div>
+
+              <button onClick={handleOptimize} disabled={isOptimizing} className={`w-full py-4 rounded-xl font-bold text-white transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 ${isOptimizing ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg shadow-blue-200'}`}>
+                {isOptimizing ? (
+                  <><span className="animate-spin text-xl">⏳</span> Analisi e Ottimizzazione in corso...</>
+                ) : (
+                  <>🚀 Ottimizza CV per questa posizione</>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-secondary">Job Description (Copia da LinkedIn)</label>
-          <textarea
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            rows={8}
-            className="w-full p-4 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent resize-none text-sm leading-relaxed"
-            placeholder="Incolla qui l'intera descrizione della posizione..."
-          />
-        </div>
+        {/* Destra: Preview o Raffinamento */}
+        <div className="relative">
+          {optimizedData ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-slate-800">Preview Ottimizzata</h2>
+                <div className="flex gap-2">
+                  <button onClick={() => setOptimizedData(null)} className="text-sm text-slate-500 hover:text-red-500">Cancella</button>
+                </div>
+              </div>
+              
+              <ResumePreview data={optimizedData} />
 
-        {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-lg flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" /> {error}
-          </div>
-        )}
-
-        <button
-          onClick={handleOptimize}
-          disabled={isOptimizing}
-          className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 group"
-        >
-          {isOptimizing ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+              {/* BARRA COMANDI DI RAFFINAMENTO */}
+              <div className="bg-white p-6 rounded-2xl shadow-md border border-blue-100 mt-6">
+                <h3 className="text-sm font-bold text-blue-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  ✨ Comandi di Raffinamento IA
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => handleRefine("Voglio altre 3 varianti diverse per i Job Title, mantieni lo standard di mercato ma non clonare l'annuncio.")}
+                    disabled={refinementLoading}
+                    className="py-2 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
+                  >
+                    🔄 Varia Job Titles
+                  </button>
+                  <button 
+                    onClick={() => handleRefine("Riscrivi il Sommario (Professional Summary) rendendolo più incisivo e orientato ai risultati.")}
+                    disabled={refinementLoading}
+                    className="py-2 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
+                  >
+                    ✍️ Riscrivi Profilo
+                  </button>
+                  <button 
+                    onClick={() => handleRefine("Punta molto di più sulle mie competenze AI, Vibe-coding e digital transformation nelle descrizioni delle esperienze.")}
+                    disabled={refinementLoading}
+                    className="py-2 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
+                  >
+                    🤖 Più Focus AI
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const req = prompt("Cosa vuoi cambiare in questo CV?");
+                      if(req) handleRefine(req);
+                    }}
+                    disabled={refinementLoading}
+                    className="py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all flex items-center gap-2"
+                  >
+                    💬 Altra Modifica...
+                  </button>
+                </div>
+                {refinementLoading && (
+                  <div className="mt-4 text-center text-sm text-blue-600 animate-pulse font-medium">
+                    L'IA sta rielaborando il CV secondo le tue istruzioni...
+                  </div>
+                )}
+              </div>
+            </div>
           ) : (
-            <>
-              Genera Versione Ottimizzata in {language === 'it' ? 'Italiano' : 'Inglese'} <CheckCircle2 className="w-5 h-5" />
-            </>
+            <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-3xl border-2 border-dashed border-slate-200 opacity-60">
+              <div className="text-6xl mb-6">📄</div>
+              <h2 className="text-2xl font-bold text-slate-400">Pronto per l'Analisi</h2>
+              <p className="text-slate-400 mt-2 max-w-xs">Configura il target a sinistra per vedere la magia dell'ottimizzazione.</p>
+            </div>
           )}
-        </button>
-      </div>
-
-      <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-        <h3 className="font-bold flex items-center gap-2 mb-2">
-          <FileText className="w-5 h-5 text-accent" /> CV Base in uso
-        </h3>
-        <p className="text-xs text-secondary">
-          Verrà utilizzato il tuo CV Base salvato ({baseCV.personalInfo.fullName}). 
-          L'IA non inventerà nuove esperienze, ma enfatizzerà quelle esistenti per matchare il ruolo di <strong>{jobTitle || '...'}</strong>.
-        </p>
+        </div>
       </div>
     </div>
   );
