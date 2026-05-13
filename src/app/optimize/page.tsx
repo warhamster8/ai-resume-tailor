@@ -212,17 +212,29 @@ function OptimizePageContent() {
       <div className="flex flex-col lg:flex-row h-[calc(100vh-65px)]">
         
         {/* Colonna Sinistra: Controlli (Fissa) */}
-        <div className="w-full lg:w-[450px] bg-white border-r border-slate-200 overflow-y-auto p-8 space-y-8">
+        <div className="w-full lg:w-[450px] bg-white border-r border-slate-200 overflow-y-auto p-8 space-y-8 relative z-10">
           <section>
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Target Job</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Azienda</label>
-                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="es. Google" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                <input 
+                  type="text" 
+                  value={companyName} 
+                  onChange={(e) => setCompanyName(e.target.value)} 
+                  placeholder="es. Google" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-900 bg-white" 
+                />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Ruolo Target</label>
-                <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="es. Project Manager" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                <input 
+                  type="text" 
+                  value={jobTitle} 
+                  onChange={(e) => setJobTitle(e.target.value)} 
+                  placeholder="es. Project Manager" 
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm text-slate-900 bg-white" 
+                />
               </div>
             </div>
           </section>
@@ -237,7 +249,13 @@ function OptimizePageContent() {
 
           <section>
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Job Description</h2>
-            <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={6} className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs" placeholder="Incolla l'annuncio..." />
+            <textarea 
+              value={jobDescription} 
+              onChange={(e) => setJobDescription(e.target.value)} 
+              rows={6} 
+              className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs text-slate-900 bg-white" 
+              placeholder="Incolla l'annuncio..." 
+            />
           </section>
 
           {error && (

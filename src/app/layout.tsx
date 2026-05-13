@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
+    <html lang="it" style={{ colorScheme: 'light' }}>
       <body className={`${inter.className} antialiased`}>
         <Navbar />
         <main className="min-h-screen bg-muted/30">
