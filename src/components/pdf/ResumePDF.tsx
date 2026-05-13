@@ -16,18 +16,24 @@ export default function ResumePDF({ data, templateId }: Props) {
   const isSlate = templateId === 6;
   const isElite = templateId === 7;
 
-  const displayData = isOriginal ? {
+  const displayData = {
     ...data,
     personalInfo: {
-      ...data.personalInfo,
-      summary: (data.personalInfo as any)._metadata?.original || data.personalInfo.summary
+      fullName: data.personalInfo?.fullName || '',
+      title: data.personalInfo?.title || '',
+      phone: data.personalInfo?.phone || '',
+      email: data.personalInfo?.email || '',
+      location: data.personalInfo?.location || '',
+      summary: isOriginal ? ((data.personalInfo as any)?._metadata?.original || data.personalInfo?.summary || '') : (data.personalInfo?.summary || '')
     },
-    experience: data.experience.map((exp: any) => ({
+    experience: (data.experience || []).map((exp: any) => ({
       ...exp,
-      position: exp._metadata?.originalPosition || exp.position,
-      description: exp._metadata?.originalDescription || exp.description
-    }))
-  } : data;
+      position: isOriginal ? (exp._metadata?.originalPosition || exp.position) : exp.position,
+      description: isOriginal ? (exp._metadata?.originalDescription || exp.description) : exp.description
+    })),
+    skills: data.skills || [],
+    education: data.education || []
+  };
 
   const styles = StyleSheet.create({
     pageBleed: { padding: 0, fontFamily: 'Helvetica', color: '#333' },
@@ -99,7 +105,7 @@ export default function ResumePDF({ data, templateId }: Props) {
               </View>
             ))}
             <Text style={[styles.eliteSectionTitle, { marginTop: 25 }]} wrap={false}>Skills</Text>
-            {displayData.skills.map((s, i) => (
+            {displayData.skills?.map((s: any, i: number) => (
               <View key={i} style={styles.eliteSkillRow} wrap={false}>
                 <Text style={{ fontSize: 9, fontWeight: 'bold' }}>{s.name}</Text>
                 <View style={styles.eliteProgressBar}>
@@ -110,7 +116,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           </View>
           <View style={styles.eliteRightCol}>
             <Text style={styles.eliteSectionTitle} wrap={false}>Esperienza Lavorativa</Text>
-            {displayData.experience.map((exp: any, i: number) => (
+            {(displayData.experience || []).map((exp: any, i: number) => (
               <View key={i} style={styles.eliteExpItem} wrap={false}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={styles.eliteExpPos}>{exp.position}</Text>
@@ -135,7 +141,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           <Text style={{ fontSize: 8.5, marginBottom: 5 }} wrap={false}>{displayData.personalInfo.email}</Text>
           <Text style={{ fontSize: 8.5, marginBottom: 25 }} wrap={false}>{displayData.personalInfo.phone}</Text>
           <Text style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: 10, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)', paddingBottom: 5 }} wrap={false}>Competenze</Text>
-          {displayData.skills.map((s, i) => (
+          {(displayData.skills || []).map((s, i) => (
             <Text key={i} style={{ fontSize: 9, marginBottom: 6 }} wrap={false}>• {s.name}</Text>
           ))}
         </View>
@@ -143,7 +149,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           <Text style={styles.sectionTitle} wrap={false}>Profilo Professionale</Text>
           <Text style={styles.standardText} wrap={false}>{displayData.personalInfo.summary}</Text>
           <Text style={[styles.sectionTitle, { marginTop: 25 }]} wrap={false}>Esperienza</Text>
-          {displayData.experience.map((exp: any, i: number) => (
+          {(displayData.experience || []).map((exp: any, i: number) => (
             <View key={i} style={{ marginBottom: 20 }} wrap={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 10.5 }}>{exp.position}</Text>
@@ -176,7 +182,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           <Text style={styles.standardText} wrap={false}>{displayData.personalInfo.summary}</Text>
           
           <Text style={styles.slateSectionTitle} wrap={false}>Esperienza Lavorativa</Text>
-          {displayData.experience.map((exp: any, i: number) => (
+          {(displayData.experience || []).map((exp: any, i: number) => (
             <View key={i} style={{ marginBottom: 20 }} wrap={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 10.5 }}>{exp.company}</Text>
@@ -189,7 +195,7 @@ export default function ResumePDF({ data, templateId }: Props) {
 
           <Text style={styles.slateSectionTitle} wrap={false}>Competenze & Skill</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-            {displayData.skills.map((s, i) => (
+            {(displayData.skills || []).map((s: any, i: number) => (
               <Text key={i} style={{ fontSize: 8.5, padding: '4 10', backgroundColor: '#f1f5f9', color: '#334155', borderRadius: 4, marginRight: 6, marginBottom: 6 }} wrap={false}>{s.name}</Text>
             ))}
           </View>

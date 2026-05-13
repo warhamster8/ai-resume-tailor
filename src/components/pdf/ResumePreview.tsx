@@ -70,7 +70,7 @@ export default function ResumePreview({ data }: Props) {
                   {/* FUMETTO POSIZIONATO IN ALTO AL CENTRO */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-72 bg-slate-900/95 backdrop-blur-md text-white p-5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] opacity-0 group-hover:opacity-100 transition-all pointer-events-none translate-y-2 group-hover:translate-y-0 z-50 border border-slate-700">
                     <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-2">💡 Ottimizzazione Profilo</p>
-                    <p className="text-xs leading-relaxed text-slate-100">{data.personalInfo._metadata?.reason || "Ho riscritto il sommario per evidenziare le tue competenze PLM e Digital Transformation."}</p>
+                    <p className="text-xs leading-relaxed text-slate-100">{data.personalInfo?._metadata?.reason || "Ho riscritto il sommario per evidenziare le tue competenze PLM e Digital Transformation."}</p>
                     {/* Triangolino in basso */}
                     <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45 border-b border-r border-slate-700"></div>
                   </div>
@@ -78,7 +78,7 @@ export default function ResumePreview({ data }: Props) {
 
                 {/* SUGGERIMENTI ESPERIENZE - POSIZIONATI SOPRA */}
                 <div className="mt-40 space-y-24">
-                  {data.experience.map((exp: any, i: number) => (
+                  {(data.experience || []).map((exp: any, i: number) => (
                     <div key={i} className="relative group pointer-events-auto cursor-help">
                        {exp.position !== exp._metadata?.originalPosition && (
                          <>
