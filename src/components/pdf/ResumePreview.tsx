@@ -11,11 +11,10 @@ interface Props {
 }
 
 const templates = [
-  { id: 0, name: 'Master (Testo Originale)', color: '#666' },
-  { id: 1, name: 'Professionale (IA)', color: '#0070f3' },
-  { id: 4, name: 'Modern ATS (Harvard)', color: '#000' },
-  { id: 2, name: 'Europass (Clean)', color: '#0056b3' },
-  { id: 3, name: 'Executive Minimal', color: '#333' },
+  { id: 1, name: '📄 Classico (Testo IA)' },
+  { id: 0, name: '📋 Classico (Testo Originale)' },
+  { id: 2, name: '🔵 Modern Blue (IA)' },
+  { id: 3, name: '⚡ ATS Minimal (IA)' },
 ];
 
 export default function ResumePreview({ data }: Props) {
