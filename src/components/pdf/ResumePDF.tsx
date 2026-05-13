@@ -19,12 +19,12 @@ export default function ResumePDF({ data, templateId }: Props) {
   const displayData = {
     ...data,
     personalInfo: {
+      ...(data.personalInfo || {}),
       fullName: data.personalInfo?.fullName || '',
       title: data.personalInfo?.title || '',
-      phone: data.personalInfo?.phone || '',
-      email: data.personalInfo?.email || '',
-      location: data.personalInfo?.location || '',
-      summary: isOriginal ? ((data.personalInfo as any)?._metadata?.original || data.personalInfo?.summary || '') : (data.personalInfo?.summary || '')
+      summary: isOriginal 
+        ? ((data.personalInfo as any)?._metadata?.original || data.personalInfo?.summary || '') 
+        : (data.personalInfo?.summary || '')
     },
     experience: (Array.isArray(data.experience) ? data.experience : []).map((exp: any) => ({
       ...exp,
@@ -32,11 +32,10 @@ export default function ResumePDF({ data, templateId }: Props) {
       description: (isOriginal ? (exp._metadata?.originalDescription || exp.description) : exp.description) || '',
       company: exp.company || '',
       startDate: exp.startDate || '',
-      endDate: exp.endDate || '',
-      current: exp.current || false
+      endDate: exp.endDate || ''
     })),
-    skills: (Array.isArray(data.skills) ? data.skills : []).map((s: any) => ({ name: s?.name || '', level: s?.level || '' })),
-    education: (Array.isArray(data.education) ? data.education : []).map((edu: any) => ({ degree: edu?.degree || '', school: edu?.school || '' }))
+    skills: Array.isArray(data.skills) ? data.skills : [],
+    education: Array.isArray(data.education) ? data.education : []
   };
 
   const styles = StyleSheet.create({
