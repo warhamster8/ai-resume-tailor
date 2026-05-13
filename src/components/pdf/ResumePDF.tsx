@@ -30,10 +30,11 @@ export default function ResumePDF({ data, templateId }: Props) {
   } : data;
 
   const styles = StyleSheet.create({
-    page: { padding: 0, fontFamily: 'Helvetica', color: '#333' },
+    pageBleed: { padding: 0, fontFamily: 'Helvetica', color: '#333' },
+    pageElite: { paddingTop: 45, paddingBottom: 45, paddingHorizontal: 40, fontFamily: 'Helvetica', color: '#333' },
     
     // --- ELITE PORTFOLIO EXPANDED (ID 7) ---
-    eliteContainer: { padding: '45 40' },
+    eliteContainer: { }, // Padding moved to Page
     eliteHeader: { marginBottom: 15 },
     eliteName: { fontSize: 30, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase', color: '#1a1a1a' },
     eliteSubName: { fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#666', marginTop: 5 },
@@ -70,7 +71,7 @@ export default function ResumePDF({ data, templateId }: Props) {
   });
 
   const EliteTemplate = () => (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" style={styles.pageElite}>
       <View style={styles.eliteContainer}>
         <View style={styles.eliteHeader} wrap={false}>
           <Text style={styles.eliteName}>{displayData.personalInfo.fullName}</Text>
@@ -127,7 +128,7 @@ export default function ResumePDF({ data, templateId }: Props) {
   );
 
   const TwoColumnLayout = () => (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" style={styles.pageBleed}>
       <View style={{ flexDirection: 'row', minHeight: '100%' }}>
         <View style={styles.sidebar}>
           <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 15 }} wrap={false}>{displayData.personalInfo.fullName}</Text>
@@ -158,7 +159,7 @@ export default function ResumePDF({ data, templateId }: Props) {
   );
 
   const SlateTemplate = () => (
-    <Page size="A4" style={styles.page}>
+    <Page size="A4" style={styles.pageBleed}>
       <View>
         <View style={styles.slateHeader} wrap={false}>
           <Text style={styles.slateName}>{displayData.personalInfo.fullName}</Text>
