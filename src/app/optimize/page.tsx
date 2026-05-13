@@ -23,6 +23,7 @@ export default function OptimizePage() {
 }
 
 function OptimizePageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -38,55 +39,56 @@ function OptimizePageContent() {
 
   useEffect(() => {
     async function loadInitialData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
 
-      const id = searchParams.get('id');
-      console.log('OptimizePage: ID found in URL:', id);
-      
-      if (id) {
-        console.log('OptimizePage: Fetching specific record...');
-        const { data, error: fetchError } = await supabase
+        const id = searchParams.get('id');
+        console.log('OptimizePage: ID found in URL:', id);
+        
+        if (id) {
+          console.log('OptimizePage: Fetching specific record...');
+          const { data, error: fetchError } = await supabase
+            .from('cv_history')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (fetchError) {
+            console.error('OptimizePage: Error fetching record:', fetchError);
+            setError('Impossibile caricare l\'ottimizzazione. Verifica la connessione.');
+          }
+
+          if (data) {
+            console.log('OptimizePage: Data loaded successfully');
+            setOptimizedData(data.optimized_cv_data);
+            setCompanyName(data.target_company);
+            setJobTitle(data.target_position);
+            setJobDescription(data.optimized_cv_data._jobDescription || '');
+            setBaseCV(data.base_cv_data);
+            setCurrentRecordId(data.id);
+            return;
+          } else {
+            console.warn('OptimizePage: No data found for ID:', id);
+          }
+        }
+
+        console.log('OptimizePage: Loading base CV...');
+        const { data: baseData, error: baseError } = await supabase
           .from('cv_history')
-          .select('*')
-          .eq('id', id)
+          .select('base_cv_data')
+          .eq('user_id', user.id)
+          .eq('is_base', true)
           .single();
 
-        if (fetchError) {
-          console.error('OptimizePage: Error fetching record:', fetchError);
-          setError('Impossibile caricare l\'ottimizzazione. Verifica la connessione.');
+        if (baseData) {
+          setBaseCV(baseData.base_cv_data);
+        } else if (baseError) {
+          console.error('Error loading base CV:', baseError);
         }
-
-        if (data) {
-          console.log('OptimizePage: Data loaded successfully');
-          setOptimizedData(data.optimized_cv_data);
-          setCompanyName(data.target_company);
-          setJobTitle(data.target_position);
-          setJobDescription(data.optimized_cv_data._jobDescription || '');
-          setBaseCV(data.base_cv_data);
-          setCurrentRecordId(data.id);
-          return;
-        } else {
-          console.warn('OptimizePage: No data found for ID:', id);
-        }
-      }
-
-      console.log('OptimizePage: Loading base CV...');
-      const { data: baseData, error: baseError } = await supabase
-        .from('cv_history')
-        .select('base_cv_data')
-        .eq('user_id', user.id)
-        .eq('is_base', true)
-        .single();
-
-      if (baseData) {
-        setBaseCV(baseData.base_cv_data);
-      } else if (baseError) {
-        console.error('Error loading base CV:', baseError);
-      }
       } finally {
         setInitialLoading(false);
       }
