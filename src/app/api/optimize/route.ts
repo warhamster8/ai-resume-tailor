@@ -11,53 +11,69 @@ export async function POST(req: Request) {
   try {
     const { baseData, jobTitle, jobDescription } = await req.json();
 
-    const systemPrompt = `Sei un Senior Executive Recruiter. Il tuo compito è ottimizzare il CV di un candidato per una specifica posizione.
+    // Prepariamo l'array experience con indici espliciti per l'IA
+    const experienceWithIndex = baseData.experience.map((exp: any, i: number) => ({
+      index: i,
+      company: exp.company,
+      originalPosition: exp.position,
+      originalDescription: exp.description,
+      startDate: exp.startDate,
+      endDate: exp.endDate,
+      current: exp.current,
+    }));
 
-REGOLA ASSOLUTA N.1 - VIETATO INVENTARE:
-NON aggiungere MAI certificazioni, corsi, titoli di studio, tecnologie, lingue o competenze che NON sono già presenti nel CV base. Se lo fai, stai falsificando un documento professionale. Puoi solo riformulare ciò che già esiste.
+    const systemPrompt = `Sei un Senior Executive Recruiter. Ottimizza il CV per la posizione di "${jobTitle}".
 
-REGOLA ASSOLUTA N.2 - JOB TITLE OBBLIGATORIO DA MODIFICARE:
-I Job Title interni alle aziende spesso non hanno senso per chi legge il CV dall'esterno. Devi SEMPRE trasformarli in titoli standard di mercato, allineati con il ruolo target.
-Esempi OBBLIGATORI da seguire:
-- "IT Digital Application Professional" → "IT Project Manager" o "Application Manager" (a seconda del target)
-- "Workload Coordinator" → "Operations Coordinator" o "Demand Planner"
-- "Quality Specialist MO" → "Quality Manager" o "QA Specialist"
-- "Business Analyst Jr" → "Business Analyst" (rimuovi Jr se non serve al target)
-Il titolo ottimizzato deve essere il termine più universalmente riconosciuto e prestigioso per quel ruolo, coerente con la posizione target.
+REGOLA N.1 - VIETATO INVENTARE:
+NON aggiungere certificazioni, corsi, tecnologie o competenze non presenti nel CV originale. Puoi SOLO riformulare ciò che già esiste.
+
+REGOLA N.2 - JOB TITLE: OBBLIGATORIO CAMBIARE:
+I titoli interni aziendali sono incomprensibili al mercato esterno. DEVI sempre tradurli nel termine standard di settore.
+Esempi:
+- "IT Digital Application Professional" → "IT Project Manager" (se il ruolo include project management)
+- "Workload Coordinator" → "Operations Coordinator"
+- "Quality Specialist MO" → "Quality Assurance Manager"
+NON lasciare mai un titolo aziendale criptico invariato.
 
 REGOLA N.3 - LINGUA:
-Analizza la lingua della Job Description. Scrivi TUTTO il CV nella stessa lingua (italiano o inglese). Non mescolare mai le due lingue.
+Determina la lingua della Job Description. Scrivi TUTTO il CV in quella lingua. Non mescolare mai italiano e inglese.
 
-REGOLA N.4 - RISCRITTURA ESPERIENZE:
-Riscrivi le descrizioni di ogni esperienza usando verbi d'azione (Gestito, Guidato, Implementato, Ottimizzato) e la tecnica STAR. Integra le keyword della JD dove pertinente.`;
+REGOLA N.4 - RISCRITTURA OBBLIGATORIA:
+Ogni descrizione DEVE essere riscritta con verbi d'azione forti e keyword della JD. NON restituire mai la descrizione originale invariata.`;
 
     const userPrompt = `RUOLO TARGET: ${jobTitle}
+JOB DESCRIPTION: ${jobDescription}
 
-JOB DESCRIPTION:
-${jobDescription}
+ESPERIENZE DA OTTIMIZZARE (in ordine, per indice):
+${JSON.stringify(experienceWithIndex, null, 2)}
 
-CV BASE (non modificare i FATTI, solo il modo in cui sono espressi):
-${JSON.stringify(baseData)}
+ISTRUZIONI:
+- Restituisci un array "experience" con ESATTAMENTE ${baseData.experience.length} oggetti, nello stesso ordine.
+- Per ogni oggetto, includi: index (invariato), newPosition (titolo ottimizzato), newDescription (descrizione riscritta), changeReason.
+- NON omettere nessun elemento dell'array.
 
-RISPONDI ESCLUSIVAMENTE IN JSON con questa struttura esatta:
+SOMMARIO BASE: "${baseData.personalInfo.summary}"
+SKILLS ESISTENTI: ${baseData.skills.map((s: any) => s.name).join(', ')}
+
+RISPONDI IN JSON:
 {
   "personalInfo": {
-    "summary": "Sommario ottimizzato",
-    "originalSummary": "Copia esatta del sommario originale dal CV base",
-    "changeReason": "Perché questo sommario è più efficace"
+    "summary": "Sommario completamente riscritto e potente",
+    "originalSummary": "Il sommario originale copiato esattamente",
+    "changeReason": "Perché questo è meglio"
   },
   "experience": [
     {
-      "id": "id_originale_invariato",
-      "position": "NUOVO TITOLO STANDARD DI MERCATO (OBBLIGATORIO, non copiare quello originale se è aziendale)",
-      "originalPosition": "Titolo originale esatto dal CV base",
-      "description": "Descrizione riscritta con verbi d'azione e keyword della JD",
-      "originalDescription": "Descrizione originale esatta dal CV base",
-      "changeReason": "Spiegazione concisa del perché questo titolo/descrizione è migliore"
+      "index": 0,
+      "newPosition": "Titolo standard di mercato",
+      "originalPosition": "Titolo originale",
+      "newDescription": "Descrizione riscritta con verbi d'azione e keyword della JD",
+      "originalDescription": "Descrizione originale",
+      "changeReason": "Motivazione"
     }
   ],
   "skills": [
-    { "name": "Nome skill (SOLO skill già presenti nel CV base, NESSUNA AGGIUNTA)", "level": "Livello originale" }
+    { "name": "Nome skill (SOLO quelle già esistenti nel CV)", "level": "Livello" }
   ],
   "atsScore": 95
 }`;
@@ -80,45 +96,53 @@ RISPONDI ESCLUSIVAMENTE IN JSON con questa struttura esatta:
     });
 
     if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      console.error("DeepSeek API Error:", err);
       return NextResponse.json({ message: "Errore dall'API DeepSeek" }, { status: response.status });
     }
 
     const data = await response.json();
-    const optimizedContent = JSON.parse(data.choices[0].message.content);
+    const raw = data.choices[0].message.content;
+    console.log("AI raw response:", raw); // Debug log
 
-    // Merge: usiamo i dati ottimizzati dell'IA ma manteniamo tutti i campi strutturali del CV base
+    const optimizedContent = JSON.parse(raw);
+
+    // MERGE PER INDICE: molto più robusto del match per ID
+    const mergedExperience = baseData.experience.map((exp: any, i: number) => {
+      // Cerca prima per indice esplicito, poi per posizione nell'array
+      const opt = optimizedContent.experience?.find((e: any) => e.index === i)
+        ?? optimizedContent.experience?.[i];
+
+      if (opt) {
+        return {
+          ...exp,
+          position: opt.newPosition || exp.position,
+          description: opt.newDescription || exp.description,
+          _metadata: {
+            originalPosition: opt.originalPosition || exp.position,
+            originalDescription: opt.originalDescription || exp.description,
+            reason: opt.changeReason || "",
+          },
+        };
+      }
+      return exp;
+    });
+
     const optimizedResume = {
       ...baseData,
       personalInfo: {
         ...baseData.personalInfo,
-        summary: optimizedContent.personalInfo.summary,
+        summary: optimizedContent.personalInfo?.summary || baseData.personalInfo.summary,
         _metadata: {
-          original: optimizedContent.personalInfo.originalSummary,
-          reason: optimizedContent.personalInfo.changeReason
-        }
+          original: optimizedContent.personalInfo?.originalSummary || baseData.personalInfo.summary,
+          reason: optimizedContent.personalInfo?.changeReason || "",
+        },
       },
-      experience: baseData.experience.map((exp: any) => {
-        const opt = optimizedContent.experience?.find((e: any) => e.id === exp.id);
-        if (opt) {
-          return {
-            ...exp,
-            position: opt.position,
-            description: opt.description,
-            _metadata: {
-              originalPosition: opt.originalPosition,
-              originalDescription: opt.originalDescription,
-              reason: opt.changeReason
-            }
-          };
-        }
-        return exp;
-      }),
-      // IMPORTANTE: per le skills, filtriamo per assicurarci che siano solo quelle già nel CV base
-      skills: optimizedContent.skills?.filter((optSkill: any) =>
-        baseData.skills.some((baseSkill: any) =>
-          baseSkill.name.toLowerCase().includes(optSkill.name.toLowerCase().substring(0, 5))
-        )
-      ) || baseData.skills,
+      experience: mergedExperience,
+      // Skills: teniamo quelle originali come fallback sicuro
+      skills: optimizedContent.skills?.length > 0
+        ? optimizedContent.skills
+        : baseData.skills,
       atsScore: optimizedContent.atsScore,
     };
 
