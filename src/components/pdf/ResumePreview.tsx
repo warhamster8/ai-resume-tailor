@@ -11,6 +11,7 @@ interface Props {
 }
 
 const templates = [
+  { id: 7, name: '🏆 Elite Portfolio', color: '#1a1a1a' },
   { id: 2, name: '🔵 Modern Blue', color: '#1d4ed8' },
   { id: 5, name: '🟢 Emerald Executive', color: '#064e3b' },
   { id: 6, name: '🩶 Slate Modern', color: '#334155' },

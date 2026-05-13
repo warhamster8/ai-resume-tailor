@@ -14,6 +14,7 @@ export default function ResumePDF({ data, templateId }: Props) {
   const isBlue = templateId === 2;
   const isEmerald = templateId === 5;
   const isSlate = templateId === 6;
+  const isElite = templateId === 7;
 
   const displayData = isOriginal ? {
     ...data,
@@ -28,184 +29,144 @@ export default function ResumePDF({ data, templateId }: Props) {
     }))
   } : data;
 
-  const colors = {
-    blue: { primary: '#1d4ed8', secondary: '#eff6ff', text: '#1e3a8a', sidebar: '#1d4ed8' },
-    emerald: { primary: '#064e3b', secondary: '#ecfdf5', text: '#064e3b', sidebar: '#064e3b' },
-    slate: { primary: '#334155', secondary: '#f1f5f9', text: '#1e293b', sidebar: '#f8fafc' },
-    classic: { primary: '#1a1a1a', secondary: '#f5f5f5', text: '#111', sidebar: '#fff' }
-  };
-
-  const theme = isBlue ? colors.blue : isEmerald ? colors.emerald : isSlate ? colors.slate : colors.classic;
-
   const styles = StyleSheet.create({
     page: {
-      padding: isSlate ? 0 : 0, // Gestiamo il padding internamente per coerenza
+      padding: isElite ? 0 : 0,
       fontFamily: 'Helvetica',
       fontSize: 9,
       lineHeight: 1.4,
       color: '#333',
     },
+    // --- STILI ELITE PORTFOLIO (ID 7) ---
+    eliteContainer: { padding: 40 },
+    eliteHeader: { marginBottom: 20 },
+    eliteName: { fontSize: 32, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase', color: '#1a1a1a' },
+    eliteSubName: { fontSize: 10, letterSpacing: 3, textTransform: 'uppercase', color: '#666', marginTop: 5 },
+    eliteLine: { height: 1, backgroundColor: '#eee', marginVertical: 15 },
+    eliteContactRow: { flexDirection: 'row', justifyContent: 'center', gap: 15, marginBottom: 20 },
+    eliteContactItem: { fontSize: 8, color: '#444' },
+    eliteVerticalLine: { width: 1, height: 10, backgroundColor: '#ccc' },
+    eliteProfileBox: { backgroundColor: '#2d2d2d', padding: 25, color: '#fff', marginBottom: 30 },
+    eliteProfileTitle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 10, color: '#fff' },
+    eliteBody: { flexDirection: 'row', gap: 40 },
+    eliteLeftCol: { width: '35%' },
+    eliteRightCol: { width: '65%' },
+    eliteSectionTitle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 2, textTransform: 'uppercase', borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 5, marginBottom: 15, color: '#1a1a1a' },
+    eliteSkillRow: { marginBottom: 12 },
+    eliteProgressBar: { height: 3, backgroundColor: '#eee', marginTop: 4, position: 'relative' },
+    eliteProgressFill: { height: 3, backgroundColor: '#333', position: 'absolute', left: 0, top: 0 },
+    eliteExpItem: { marginBottom: 20 },
+    eliteExpPos: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', color: '#1a1a1a' },
+    eliteExpComp: { fontSize: 9, fontStyle: 'italic', color: '#666', marginBottom: 5 },
+    eliteGdpr: { position: 'absolute', bottom: 30, left: 0, right: 0, textAlign: 'center', fontSize: 7, color: '#999', fontStyle: 'italic' },
+    // ------------------------------------
+    
     container: { flexDirection: 'row', height: '100%' },
-    sidebar: {
-      width: '32%',
-      backgroundColor: theme.sidebar,
-      padding: 20,
-      color: (isBlue || isEmerald) ? '#fff' : '#333',
-    },
-    main: {
-      width: '68%',
-      padding: 30,
-      backgroundColor: '#fff',
-    },
-    sidebarHeader: {
-      marginBottom: 25,
-      borderBottomWidth: 1,
-      borderBottomColor: 'rgba(255,255,255,0.2)',
-      paddingBottom: 15,
-    },
-    name: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 8,
-    },
-    contactText: {
-      fontSize: 7.5,
-      marginBottom: 3,
-      opacity: 0.9,
-    },
-    sectionTitle: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      textTransform: 'uppercase',
-      color: theme.primary,
-      marginBottom: 10,
-      marginTop: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.secondary,
-      paddingBottom: 4,
-    },
-    sidebarTitle: {
-      fontSize: 9,
-      fontWeight: 'bold',
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      marginTop: 20,
-      marginBottom: 10,
-      color: (isBlue || isEmerald) ? '#fff' : theme.primary,
-      borderBottomWidth: 1,
-      borderBottomColor: 'rgba(255,255,255,0.2)',
-      paddingBottom: 3,
-    },
-    expItem: { marginBottom: 15 },
-    expHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
-    company: { fontWeight: 'bold', fontSize: 10, color: '#111' },
-    position: { fontStyle: 'italic', fontWeight: 'bold', color: theme.primary, fontSize: 9.5 },
-    date: { fontSize: 8, color: '#666' },
-    desc: { fontSize: 8.5, textAlign: 'justify', marginTop: 4, lineHeight: 1.3 },
-    skillItem: {
-      marginBottom: 8,
-    },
-    skillName: {
-      fontSize: 8.5,
-      fontWeight: 'bold',
-    },
-    skillLevel: {
-      fontSize: 7,
-      opacity: 0.8,
-    }
+    sidebar: { width: '32%', backgroundColor: isBlue ? '#1d4ed8' : isEmerald ? '#064e3b' : '#fff', padding: 20, color: (isBlue || isEmerald) ? '#fff' : '#333' },
+    main: { width: '68%', padding: 30, backgroundColor: '#fff' },
+    name: { fontSize: 20, fontWeight: 'bold', marginBottom: 8 },
+    contactText: { fontSize: 7.5, marginBottom: 3, opacity: 0.9 },
+    sectionTitle: { fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', color: isBlue ? '#1d4ed8' : isEmerald ? '#064e3b' : '#333', marginBottom: 10, marginTop: 20, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 4 },
   });
 
-  const TwoColumnLayout = () => (
-    <View style={styles.container}>
-      <View style={styles.sidebar}>
-        <View style={styles.sidebarHeader}>
-          <Text style={styles.name}>{displayData.personalInfo.fullName}</Text>
-          <Text style={styles.contactText}>{displayData.personalInfo.email}</Text>
-          <Text style={styles.contactText}>{displayData.personalInfo.phone}</Text>
-          <Text style={styles.contactText}>{displayData.personalInfo.location}</Text>
+  const EliteTemplate = () => (
+    <Page size="A4" style={styles.page}>
+      <View style={styles.eliteContainer}>
+        <View style={styles.eliteHeader}>
+          <Text style={styles.eliteName}>{displayData.personalInfo.fullName}</Text>
+          <Text style={styles.eliteSubName}>{displayData.personalInfo.title || 'Technical Professional'}</Text>
         </View>
         
-        <Text style={styles.sidebarTitle}>Competenze</Text>
-        {displayData.skills.map((s, i) => (
-          <View key={i} style={styles.skillItem}>
-            <Text style={styles.skillName}>{s.name}</Text>
-            <Text style={styles.skillLevel}>{s.level}</Text>
-          </View>
-        ))}
+        <View style={styles.eliteLine} />
+        
+        <View style={styles.eliteContactRow}>
+          <Text style={styles.eliteContactItem}>{displayData.personalInfo.phone}</Text>
+          <View style={styles.eliteVerticalLine} />
+          <Text style={styles.eliteContactItem}>{displayData.personalInfo.email}</Text>
+          <View style={styles.eliteVerticalLine} />
+          <Text style={styles.eliteContactItem}>{displayData.personalInfo.location}</Text>
+        </View>
 
-        {displayData.education && (
-          <View>
-            <Text style={styles.sidebarTitle}>Istruzione</Text>
-            {displayData.education.map((edu: any, i: number) => (
-              <View key={i} style={{ marginBottom: 10 }}>
-                <Text style={{ fontWeight: 'bold', fontSize: 8.5 }}>{edu.degree}</Text>
-                <Text style={{ fontSize: 7.5, opacity: 0.8 }}>{edu.school}</Text>
+        <View style={styles.eliteProfileBox}>
+          <Text style={styles.eliteProfileTitle}>Profilo</Text>
+          <Text style={{ fontSize: 8.5, lineHeight: 1.5 }}>{displayData.personalInfo.summary}</Text>
+        </View>
+
+        <View style={styles.eliteBody}>
+          <View style={styles.eliteLeftCol}>
+            <Text style={styles.eliteSectionTitle}>Istruzione</Text>
+            {displayData.education?.map((edu: any, i: number) => (
+              <View key={i} style={{ marginBottom: 15 }}>
+                <Text style={{ fontSize: 9, fontWeight: 'bold', textTransform: 'uppercase' }}>{edu.degree}</Text>
+                <Text style={{ fontSize: 8, color: '#666' }}>{edu.school}</Text>
+                <Text style={{ fontSize: 7, color: '#999' }}>{edu.startDate} - {edu.endDate}</Text>
+              </View>
+            ))}
+
+            <Text style={[styles.eliteSectionTitle, { marginTop: 20 }]}>Skills</Text>
+            {displayData.skills.map((s, i) => (
+              <View key={i} style={styles.eliteSkillRow}>
+                <Text style={{ fontSize: 8, fontWeight: 'bold', textTransform: 'uppercase' }}>{s.name}</Text>
+                <View style={styles.eliteProgressBar}>
+                  <View style={[styles.eliteProgressFill, { width: s.level === 'Expert' ? '100%' : s.level === 'Advanced' ? '80%' : '50%' }]} />
+                </View>
               </View>
             ))}
           </View>
-        )}
-      </View>
-      
-      <View style={styles.main}>
-        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Profilo Professionale</Text>
-        <Text style={styles.desc}>{displayData.personalInfo.summary}</Text>
-        
-        <Text style={styles.sectionTitle}>Esperienza Lavorativa</Text>
-        {displayData.experience.map((exp: any, i: number) => (
-          <View key={i} style={styles.expItem}>
-            <View style={styles.expHeader}>
-              <Text style={styles.company}>{exp.company}</Text>
-              <Text style={styles.date}>{exp.startDate} - {exp.current ? 'Presente' : exp.endDate}</Text>
-            </View>
-            <Text style={styles.position}>{exp.position}</Text>
-            <Text style={styles.desc}>{exp.description}</Text>
+
+          <View style={styles.eliteRightCol}>
+            <Text style={styles.eliteSectionTitle}>Esperienza Lavorativa</Text>
+            {displayData.experience.map((exp: any, i: number) => (
+              <View key={i} style={styles.eliteExpItem}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <Text style={styles.eliteExpPos}>{exp.position}</Text>
+                  <Text style={{ fontSize: 8, color: '#999' }}>{exp.startDate} - {exp.current ? 'Oggi' : exp.endDate}</Text>
+                </View>
+                <Text style={styles.eliteExpComp}>{exp.company}</Text>
+                <Text style={{ fontSize: 8.5, color: '#444', textAlign: 'justify' }}>{exp.description}</Text>
+              </View>
+            ))}
           </View>
-        ))}
+        </View>
+
+        <Text style={styles.eliteGdpr}>Autorizzo il trattamento dei dati personali contenuti nel mio CV in base all'art. 13 D. Lgs. 196/2003 e all'art. 13 GDPR 679/16.</Text>
       </View>
-    </View>
+    </Page>
   );
 
-  // Layout Slate (Modern Full Width)
-  const SlateLayout = () => (
-    <View>
-      <View style={{ backgroundColor: theme.primary, padding: 30, color: '#fff' }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 5 }}>{displayData.personalInfo.fullName}</Text>
-        <Text style={{ fontSize: 9, opacity: 0.9 }}>{displayData.personalInfo.email} • {displayData.personalInfo.phone} • {displayData.personalInfo.location}</Text>
-      </View>
-      <View style={{ padding: 30 }}>
-        <Text style={styles.sectionTitle}>Profilo Professionale</Text>
-        <Text style={styles.desc}>{displayData.personalInfo.summary}</Text>
-
-        <Text style={styles.sectionTitle}>Esperienza Lavorativa</Text>
-        {displayData.experience.map((exp: any, i: number) => (
-          <View key={i} style={styles.expItem}>
-            <View style={styles.expHeader}>
-              <Text style={styles.company}>{exp.company}</Text>
-              <Text style={styles.date}>{exp.startDate} - {exp.current ? 'Presente' : exp.endDate}</Text>
-            </View>
-            <Text style={styles.position}>{exp.position}</Text>
-            <Text style={styles.desc}>{exp.description}</Text>
+  const StandardTwoColumn = () => (
+    <Page size="A4" style={styles.page}>
+      <View style={styles.container}>
+        <View style={styles.sidebar}>
+          <Text style={styles.name}>{displayData.personalInfo.fullName}</Text>
+          <Text style={styles.contactText}>{displayData.personalInfo.email}</Text>
+          <Text style={styles.contactText}>{displayData.personalInfo.phone}</Text>
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: 9, marginBottom: 10 }}>Competenze</Text>
+            {displayData.skills.map((s, i) => (
+              <View key={i} style={{ marginBottom: 5 }}><Text style={{ fontSize: 8.5 }}>{s.name}</Text></View>
+            ))}
           </View>
-        ))}
-
-        <Text style={styles.sectionTitle}>Competenze & Skill</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 5 }}>
-          {displayData.skills.map((s, i) => (
-            <Text key={i} style={{ 
-              fontSize: 8, padding: '3 8', backgroundColor: theme.secondary, 
-              color: theme.primary, borderRadius: 4, marginRight: 5, marginBottom: 5 
-            }}>{s.name} ({s.level})</Text>
+        </View>
+        <View style={styles.main}>
+          <Text style={styles.sectionTitle}>Profilo</Text>
+          <Text style={{ fontSize: 8.5 }}>{displayData.personalInfo.summary}</Text>
+          <Text style={styles.sectionTitle}>Esperienza</Text>
+          {displayData.experience.map((exp: any, i: number) => (
+            <View key={i} style={{ marginBottom: 15 }}>
+              <Text style={{ fontWeight: 'bold', fontSize: 10 }}>{exp.position}</Text>
+              <Text style={{ fontSize: 8.5, color: '#666' }}>{exp.company} | {exp.startDate} - {exp.endDate}</Text>
+              <Text style={{ fontSize: 8.5, marginTop: 3 }}>{exp.description}</Text>
+            </View>
           ))}
         </View>
       </View>
-    </View>
+    </Page>
   );
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        {isSlate ? <SlateLayout /> : <TwoColumnLayout />}
-      </Page>
+      {isElite ? <EliteTemplate /> : (isSlate ? <StandardTwoColumn /> /* Placeholder */ : <StandardTwoColumn />)}
     </Document>
   );
 }
