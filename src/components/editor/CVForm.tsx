@@ -70,7 +70,7 @@ export default function CVForm() {
 
     if (error) {
       console.error("Errore salvataggio:", error);
-      alert("Errore durante il salvataggio");
+      alert("Errore durante il salvataggio: " + error.message);
     } else {
       alert("CV Base salvato correttamente!");
     }
