@@ -5,9 +5,9 @@ const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
 export async function POST(req: Request) {
-  if (!API_KEY) {
+  if (!API_KEY || API_KEY === "your_deepseek_api_key_here") {
     return NextResponse.json(
-      { message: "API Key DeepSeek non configurata" },
+      { message: "API Key DeepSeek non configurata. Inserisci una chiave valida nelle impostazioni." },
       { status: 500 }
     );
   }
@@ -28,9 +28,28 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(bytes);
 
     // Extract text from PDF using modern PDFParse (v2+)
-    const parser = new PDFParse({ data: buffer });
-    const pdfData = await parser.getText();
-    const extractedText = pdfData.text;
+    let extractedText = "";
+    try {
+      const parser = new PDFParse({ 
+        data: buffer,
+        verbosity: 0 
+      });
+      const pdfData = await parser.getText();
+      extractedText = pdfData.text;
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        return NextResponse.json(
+          { message: "Non è stato possibile estrarre testo dal PDF. Il file potrebbe essere un'immagine o protetto." },
+          { status: 422 }
+        );
+      }
+    } catch (parseError) {
+      console.error("PDF Parsing Error:", parseError);
+      return NextResponse.json(
+        { message: "Errore durante la lettura del PDF. Assicurati che il file non sia corrotto." },
+        { status: 500 }
+      );
+    }
 
     const systemPrompt = `Sei un esperto di analisi documenti. 
     Il tuo compito è estrarre TUTTE le informazioni da un CV testuale e organizzarle in un formato JSON strutturato.
@@ -101,22 +120,23 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       console.error("DeepSeek API Error:", errorData);
       return NextResponse.json(
-        { message: "Errore dall'API DeepSeek" },
+        { message: "Errore dall'API DeepSeek. Verifica il credito o la validità della chiave." },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    const parsedResume = JSON.parse(data.choices[0].message.content);
+    const content = data.choices[0].message.content;
+    const parsedResume = JSON.parse(content);
 
     return NextResponse.json(parsedResume);
   } catch (error) {
-    console.error("Parsing Error:", error);
+    console.error("Global Parsing Error:", error);
     return NextResponse.json(
-      { message: "Errore durante l'estrazione dei dati dal PDF" },
+      { message: "Errore imprevisto durante l'elaborazione del CV." },
       { status: 500 }
     );
   }
