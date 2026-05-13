@@ -6,10 +6,11 @@ import PersonalInfoSection from "./PersonalInfoSection";
 import ExperienceSection from "./ExperienceSection";
 import EducationSection from "./EducationSection";
 import SkillsSection from "./SkillsSection";
+import CVImporter from "./CVImporter";
 import { Save } from "lucide-react";
 
 export default function CVForm() {
-  const { register, control, handleSubmit, watch } = useForm<ResumeData>({
+  const { register, control, handleSubmit, reset } = useForm<ResumeData>({
     defaultValues: {
       personalInfo: {
         fullName: "",
@@ -24,6 +25,10 @@ export default function CVForm() {
       languages: [],
     }
   });
+
+  const handleDataParsed = (data: ResumeData) => {
+    reset(data);
+  };
 
   const onSubmit = (data: ResumeData) => {
     console.log("Saving CV Data:", data);
@@ -41,6 +46,8 @@ export default function CVForm() {
           <Save className="w-4 h-4" /> Salva CV Base
         </button>
       </div>
+
+      <CVImporter onDataParsed={handleDataParsed} />
 
       <PersonalInfoSection register={register} />
       <ExperienceSection register={register} control={control} />
