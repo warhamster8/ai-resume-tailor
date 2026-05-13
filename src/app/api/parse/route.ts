@@ -39,8 +39,9 @@ export async function POST(req: Request) {
         useWorkerFetch: false,
         isEvalSupported: false,
         useSystemFonts: true,
-        disableWorker: true // Force parsing in the main thread
-      });
+        disableWorker: true,
+        verbosity: 0
+      } as any);
       
       const pdf = await loadingTask.promise;
       let fullText = "";
