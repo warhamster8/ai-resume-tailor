@@ -18,30 +18,29 @@ export async function POST(req: Request) {
       originalDescription: exp.description,
     }));
 
-    const systemPrompt = `ORDINE ASSOLUTO: DEVI SCRIVERE TUTTO IL CV IN LINGUA ${targetLanguage.toUpperCase()}.
+    const systemPrompt = `ORDINE ASSOLUTO: SCRIVI TUTTO IN LINGUA ${targetLanguage.toUpperCase()}.
 
-Sei un Senior Executive Recruiter. Ottimizza il CV per la posizione di "${jobTitle}".
+Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}".
 
-REGOLE DI REBRANDING TITOLI (ORDINE TASSATIVO):
-- È VIETATO usare il titolo esatto dell'annuncio ("${jobTitle}") nelle tue esperienze passate. Creerebbe sospetto immediato nel recruiter.
-- Crea dei "Titoli Ponte": usa varianti professionali e prestigiose che dimostrino che sei pronto per il ruolo target (es: se cerchi come PM, usa "Project Coordinator", "Lead Implementation Specialist", "Digital Transformation Lead").
-- Il titolo deve essere una conseguenza LOGICA della descrizione dell'esperienza.
+LOGICA REBRANDING TITOLI (LA TUA MISSIONE):
+1. TRADUZIONE DAL "LINGUAGGIO INTERNO": I titoli aziendali dell'utente (es. "Digital Application Professional") sono inutili all'esterno. TRADUCILI in termini standard di mercato (es. "Technical Solutions Lead", "IT Systems Architect", "Application Manager").
+2. EVITA IL CLONING: NON copiare mai al 100% il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi prestigiosi o ruoli correlati.
+3. ESEMPIO DI SUCCESSO: Se l'annuncio cerca un "Technical Project Manager", trasforma il ruolo dell'utente in "Technical Implementation Lead" o "Digital Transformation Coordinator" se la descrizione lo giustifica.
+4. COERENZA: Il nuovo titolo deve riflettere le responsabilità reali descritte, ma con terminologia che un ATS o un recruiter esterno riconoscerebbero subito.
 
-REGOLE COMPETENZE (SKILLS):
-- LIVELLI REALISTICI: NON mettere tutto come "Expert". Usa un mix (Intermediate, Advanced, Expert).
-- AI & VIBE-CODING: Includi sempre la capacità di usare l'IA/Vibe-coding per l'efficienza.
-- Ordina le skill per pertinenza rispetto alla Job Description.
+REGOLE COMPETENZE:
+- LIVELLI REALISTICI (Mix di Intermediate, Advanced, Expert).
+- Includi "AI-Assisted Development / Vibe-Coding" se l'utente usa strumenti moderni.
 
-REGOLE GENERALI:
-- NO CERTIFICAZIONI FALSE (PMP, Scrum, ecc.).
-- LINGUA: Tutto esclusivamente in ${targetLanguage.toUpperCase()}.
-- RISPONDI SOLO CON JSON.`;
+DIVIETI:
+- NO CERTIFICAZIONI FALSE.
+- NO TESTO EXTRA FUORI DAL JSON.`;
 
     const userPrompt = `
     LINGUA: ${targetLanguage.toUpperCase()}
-    Job Post: ${jobTitle}
-    Dati: ${JSON.stringify(baseData)}
-    Esperienze: ${JSON.stringify(experienceWithIndex)}`;
+    Dati Base: ${JSON.stringify(baseData)}
+    Esperienze: ${JSON.stringify(experienceWithIndex)}
+    Obiettivo: Ottimizzare per "${jobTitle}" senza clonare il titolo.`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -56,7 +55,7 @@ REGOLE GENERALI:
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.2,
+        temperature: 0.3, // Leggera flessibilità per trovare sinonimi migliori
       }),
     });
 
@@ -101,7 +100,6 @@ REGOLE GENERALI:
     });
 
   } catch (error) {
-    console.error("Optimization Error:", error);
     return NextResponse.json({ message: "Errore durante l'ottimizzazione." }, { status: 500 });
   }
 }
