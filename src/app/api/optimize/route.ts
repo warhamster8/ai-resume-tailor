@@ -15,32 +15,39 @@ export async function POST(req: Request) {
   try {
     const { baseData, jobTitle, jobDescription } = await req.json();
 
-    const systemPrompt = `Sei un Senior Recruiter con oltre 15 anni di esperienza. 
-    ADATTAMENTO PERSONA: Analizza il Job Title e la JD:
-    - Se la posizione è tecnica/IT, agisci come un Senior Tech Recruiter.
-    - Se la posizione è in un altro settore, agisci come un Senior Recruiter esperto di quel settore specifico.
+    const systemPrompt = `Sei un Senior Executive Recruiter e Career Coach di altissimo livello. 
+    LA TUA MISSIONE: Trasformare il CV base dell'utente in una candidatura magnetica per il ruolo di "${jobTitle}".
     
-    LA TUA MISSIONE:
-    - "Indora la pillola": Riformula le esperienze reali dell'utente usando la terminologia più prestigiosa, attuale e adatta al settore, senza mai inventare fatti.
-    - ATS & HUMAN: Ottimizza per i software di screening ma mantieni un tono che impressioni un selezionatore umano senior.
-    - COERENZA: Assicurati che ogni modifica sia sensata e strategicamente allineata al ruolo target.`;
+    REGOLE DI OTTIMIZZAZIONE:
+    1. JOB TITLES: Analizza i titoli attuali dell'utente. Se sono troppo generici o non riflettono bene il mercato, MODIFICALI per renderli più prestigiosi e allineati al ruolo target (es. "Aiuto cuoco" -> "Commis de Cuisine", "Impiegato" -> "Operations Specialist"). NON inventare, ma usa la terminologia di mercato più corretta.
+    2. SOMMARIO: Deve essere un "gancio" irresistibile. Non scrivere frasi fatte. Usa dati e tono professionale senior.
+    3. ESPERIENZE: Riformula le descrizioni usando la tecnica STAR (Situation, Task, Action, Result). Enfatizza le responsabilità che sono citate nella Job Description target. Usa verbi d'azione (Gestito, Sviluppato, Coordinato, Ottimizzato).
+    4. SKILLS: Aggiorna l'elenco per includere le hard e soft skills richieste dall'annuncio, se coerenti con il profilo dell'utente.
+    5. NON INVENTARE FATTI: Puoi cambiare il MODO in cui le cose sono scritte, ma non i fatti (es. se non ha mai usato SAP, non scrivere che lo conosce).`;
 
     const userPrompt = `
-    TARGET JOB TITLE: ${jobTitle}
+    RUOLO TARGET: ${jobTitle}
     
-    LINKEDIN JOB DESCRIPTION:
+    DESCRIZIONE DELL'OFFERTA (JD):
     ${jobDescription}
 
-    USER BASE CV (JSON):
+    CV BASE DELL'UTENTE (DA TRASFORMARE):
     ${JSON.stringify(baseData)}
 
-    STRUTTURA JSON RICHIESTA:
+    RISPONDI ESCLUSIVAMENTE IN JSON CON QUESTA STRUTTURA:
     {
-      "personalInfo": { "summary": "..." },
-      "experience": [ { "id": "...", "description": "...", "highlights": ["..."] } ],
-      "skills": [ { "name": "...", "level": "..." } ],
-      "keywordsAdded": ["...", "..."],
-      "atsScore": 85
+      "personalInfo": { "summary": "Sommario ottimizzato e potente" },
+      "experience": [ 
+        { 
+          "id": "id_originale", 
+          "position": "Titolo posizione ottimizzato (ES: Senior X invece di X)",
+          "description": "Descrizione narrativa ottimizzata",
+          "highlights": ["Punto chiave 1", "Punto chiave 2"] 
+        } 
+      ],
+      "skills": [ { "name": "Nome skill", "level": "Livello" } ],
+      "keywordsAdded": ["Lista keywords strategiche inserite"],
+      "atsScore": 95
     }
     `;
 
@@ -57,23 +64,18 @@ export async function POST(req: Request) {
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3,
+        temperature: 0.5, // Più alta per favorire la riscrittura incisiva dei contenuti
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("DeepSeek API Error:", errorData);
-      return NextResponse.json(
-        { message: "Errore dall'API DeepSeek" },
-        { status: response.status }
-      );
+      return NextResponse.json({ message: "Errore dall'API DeepSeek" }, { status: response.status });
     }
 
     const data = await response.json();
     const optimizedContent = JSON.parse(data.choices[0].message.content);
 
-    // Merge optimized content with base data to ensure no loss of info
+    // Merge dell'ottimizzazione con i dati base per non perdere i campi non toccati dall'IA
     const optimizedResume = {
       ...baseData,
       personalInfo: {
@@ -82,7 +84,15 @@ export async function POST(req: Request) {
       },
       experience: baseData.experience.map((exp: any) => {
         const optimizedExp = optimizedContent.experience.find((e: any) => e.id === exp.id);
-        return optimizedExp ? { ...exp, description: optimizedExp.description, highlights: optimizedExp.highlights } : exp;
+        if (optimizedExp) {
+          return { 
+            ...exp, 
+            position: optimizedExp.position, // Permettiamo all'IA di migliorare il Job Title
+            description: optimizedExp.description, 
+            highlights: optimizedExp.highlights 
+          };
+        }
+        return exp;
       }),
       skills: optimizedContent.skills,
       keywordsAdded: optimizedContent.keywordsAdded,
@@ -92,9 +102,6 @@ export async function POST(req: Request) {
     return NextResponse.json(optimizedResume);
   } catch (error) {
     console.error("Optimization Error:", error);
-    return NextResponse.json(
-      { message: "Errore interno del server" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Errore interno del server" }, { status: 500 });
   }
 }

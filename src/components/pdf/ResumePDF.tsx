@@ -3,180 +3,235 @@
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { OptimizedResumeData } from '@/types/resume';
 
-// Configuriamo i colori dei template
-const themeColors = {
-  1: '#0070f3', // Professional (Blue)
-  2: '#333333', // Minimal (Black)
-  3: '#e91e63', // Creative (Pink)
-  4: '#4caf50', // Modern (Green)
-  5: '#3f51b5', // Executive (Indigo)
-  6: '#00bcd4', // Tech (Cyan)
-};
-
 interface Props {
   data: OptimizedResumeData;
   templateId: number;
 }
 
 export default function ResumePDF({ data, templateId }: Props) {
-  const accentColor = (themeColors as any)[templateId] || themeColors[1];
+  
+  // Stili differenziati per Template
+  const isATS = templateId === 1;
+  const isEuropass = templateId === 2;
+  const isExecutive = templateId === 3;
 
   const styles = StyleSheet.create({
     page: {
-      padding: 40,
+      padding: isEuropass ? 0 : 40,
       fontFamily: 'Helvetica',
-      fontSize: 10,
-      lineHeight: 1.4,
-      color: '#333',
+      fontSize: isATS ? 10.5 : 10,
+      lineHeight: 1.5,
+      color: '#222',
       backgroundColor: '#fff',
     },
+    // Layout Europass (due colonne)
+    europassContainer: {
+      flexDirection: 'row',
+      height: '100%',
+    },
+    europassSidebar: {
+      width: '30%',
+      backgroundColor: '#f8f9fa',
+      padding: 20,
+      borderRightWidth: 1,
+      borderRightColor: '#eee',
+    },
+    europassMain: {
+      width: '70%',
+      padding: 30,
+    },
+    // Elementi comuni con variazioni
     header: {
-      marginBottom: 25,
-      borderBottomWidth: templateId === 2 ? 0 : 2,
-      borderBottomColor: accentColor,
-      paddingBottom: 15,
-      textAlign: templateId === 3 ? 'center' : 'left',
+      marginBottom: isExecutive ? 30 : 20,
+      textAlign: isExecutive ? 'center' : 'left',
+      borderBottomWidth: isATS ? 1 : 0,
+      borderBottomColor: '#000',
+      paddingBottom: isATS ? 10 : 0,
     },
     name: {
-      fontSize: 28,
+      fontSize: isATS ? 20 : 24,
       fontWeight: 'bold',
       color: '#000',
-      marginBottom: 5,
-      textTransform: templateId === 5 ? 'uppercase' : 'none',
-      letterSpacing: templateId === 5 ? 1 : 0,
+      marginBottom: 4,
+      textTransform: isATS ? 'uppercase' : 'none',
     },
     contact: {
       flexDirection: 'row',
-      justifyContent: templateId === 3 ? 'center' : 'flex-start',
-      gap: 12,
-      color: '#666',
+      justifyContent: isExecutive ? 'center' : 'flex-start',
+      flexWrap: 'wrap',
+      gap: 10,
+      color: '#555',
       fontSize: 9,
+      marginBottom: 10,
     },
     section: {
-      marginTop: 20,
+      marginTop: 18,
     },
     sectionTitle: {
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: 'bold',
       textTransform: 'uppercase',
-      color: accentColor,
-      marginBottom: 8,
-      borderBottomWidth: templateId === 2 ? 1 : 0,
-      borderBottomColor: '#eee',
-      paddingBottom: 3,
-      letterSpacing: 0.5,
+      color: isEuropass ? '#0056b3' : '#000',
+      marginBottom: 10,
+      borderBottomWidth: isATS || isExecutive ? 1 : 0,
+      borderBottomColor: '#ccc',
+      paddingBottom: 2,
     },
     experienceItem: {
-      marginBottom: 12,
+      marginBottom: 15,
     },
     expHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'baseline',
-      marginBottom: 3,
+      marginBottom: 2,
     },
     company: {
       fontWeight: 'bold',
       fontSize: 11,
-      color: '#000',
     },
     position: {
       fontStyle: 'italic',
-      color: '#444',
-      fontSize: 10,
-      marginBottom: 4,
+      fontWeight: 'bold',
+      color: '#333',
     },
     date: {
-      color: '#777',
       fontSize: 9,
-      fontWeight: 'bold',
+      color: '#666',
     },
     description: {
       marginTop: 4,
       textAlign: 'justify',
-      lineHeight: 1.5,
+      fontSize: 9.5,
     },
-    skillsGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 6,
-      marginTop: 5,
+    skillItem: {
+      marginBottom: 5,
+      fontSize: 9,
     },
-    skillBadge: {
-      backgroundColor: templateId === 2 ? '#fff' : '#f5f5f5',
-      borderWidth: templateId === 2 ? 1 : 0,
-      borderColor: '#ddd',
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: templateId === 4 ? 12 : 3,
-    },
-    skillText: {
-      fontSize: 8.5,
-      color: '#444',
+    skillName: {
+      fontWeight: 'bold',
     }
   });
 
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.name}>{data.personalInfo.fullName}</Text>
-          <View style={styles.contact}>
-            <Text>{data.personalInfo.email}</Text>
-            <Text>•</Text>
-            <Text>{data.personalInfo.phone}</Text>
-            <Text>•</Text>
-            <Text>{data.personalInfo.location}</Text>
+  // Render per Template Modern ATS (Harvard) o Executive
+  const StandardLayout = () => (
+    <View>
+      <View style={styles.header}>
+        <Text style={styles.name}>{data.personalInfo.fullName}</Text>
+        <View style={styles.contact}>
+          <Text>{data.personalInfo.email}</Text>
+          <Text>•</Text>
+          <Text>{data.personalInfo.phone}</Text>
+          <Text>•</Text>
+          <Text>{data.personalInfo.location}</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Profilo Professionale</Text>
+        <Text style={styles.description}>{data.personalInfo.summary}</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Esperienza Lavorativa</Text>
+        {data.experience.map((exp, i) => (
+          <View key={i} style={styles.experienceItem}>
+            <View style={styles.expHeader}>
+              <Text style={styles.company}>{exp.company}</Text>
+              <Text style={styles.date}>{exp.startDate} — {exp.current ? 'Presente' : exp.endDate}</Text>
+            </View>
+            <Text style={styles.position}>{exp.position}</Text>
+            <Text style={styles.description}>{exp.description}</Text>
           </View>
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Competenze Strategiche</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 15 }}>
+          {data.skills.map((skill, i) => (
+            <Text key={i} style={styles.skillItem}>
+              <Text style={styles.skillName}>{skill.name}</Text> ({skill.level})
+            </Text>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Istruzione</Text>
+        {data.education.map((edu, i) => (
+          <View key={i} style={styles.experienceItem}>
+            <View style={styles.expHeader}>
+              <Text style={styles.company}>{edu.school}</Text>
+              <Text style={styles.date}>{edu.startDate} — {edu.endDate}</Text>
+            </View>
+            <Text style={styles.position}>{edu.degree} in {edu.field}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  // Render per Template Europass
+  const EuropassLayout = () => (
+    <View style={styles.europassContainer}>
+      <View style={styles.europassSidebar}>
+        <Text style={[styles.name, { fontSize: 18, marginBottom: 20 }]}>{data.personalInfo.fullName}</Text>
+        
+        <View style={{ marginBottom: 20 }}>
+          <Text style={[styles.sectionTitle, { fontSize: 9 }]}>Contatti</Text>
+          <Text style={{ fontSize: 8, marginBottom: 4 }}>{data.personalInfo.email}</Text>
+          <Text style={{ fontSize: 8, marginBottom: 4 }}>{data.personalInfo.phone}</Text>
+          <Text style={{ fontSize: 8 }}>{data.personalInfo.location}</Text>
         </View>
 
-        {/* Summary */}
-        <View style={styles.section}>
+        <View>
+          <Text style={[styles.sectionTitle, { fontSize: 9 }]}>Competenze</Text>
+          {data.skills.map((skill, i) => (
+            <View key={i} style={{ marginBottom: 8 }}>
+              <Text style={{ fontSize: 8, fontWeight: 'bold' }}>{skill.name}</Text>
+              <Text style={{ fontSize: 7, color: '#666' }}>{skill.level}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.europassMain}>
+        <View style={{ marginBottom: 20 }}>
           <Text style={styles.sectionTitle}>Profilo</Text>
           <Text style={styles.description}>{data.personalInfo.summary}</Text>
         </View>
 
-        {/* Experience */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Esperienza Lavorativa</Text>
+        <View style={{ marginBottom: 20 }}>
+          <Text style={styles.sectionTitle}>Esperienza</Text>
           {data.experience.map((exp, i) => (
             <View key={i} style={styles.experienceItem}>
-              <View style={styles.expHeader}>
-                <Text style={styles.company}>{exp.company}</Text>
-                <Text style={styles.date}>{exp.startDate} — {exp.current ? 'Presente' : exp.endDate}</Text>
-              </View>
+              <Text style={styles.date}>{exp.startDate} — {exp.current ? 'Presente' : exp.endDate}</Text>
               <Text style={styles.position}>{exp.position}</Text>
+              <Text style={styles.company}>{exp.company}</Text>
               <Text style={styles.description}>{exp.description}</Text>
             </View>
           ))}
         </View>
 
-        {/* Skills */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Competenze</Text>
-          <View style={styles.skillsGrid}>
-            {data.skills.map((skill, i) => (
-              <View key={i} style={styles.skillBadge}>
-                <Text style={styles.skillText}>{skill.name} • {skill.level}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Education */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Formazione</Text>
+        <View>
+          <Text style={styles.sectionTitle}>Istruzione</Text>
           {data.education.map((edu, i) => (
             <View key={i} style={styles.experienceItem}>
-              <View style={styles.expHeader}>
-                <Text style={styles.company}>{edu.school}</Text>
-                <Text style={styles.date}>{edu.startDate} — {edu.endDate}</Text>
-              </View>
-              <Text style={styles.position}>{edu.degree} in {edu.field}</Text>
+              <Text style={styles.date}>{edu.startDate} — {edu.endDate}</Text>
+              <Text style={styles.position}>{edu.degree}</Text>
+              <Text style={styles.company}>{edu.school}</Text>
             </View>
           ))}
         </View>
+      </View>
+    </View>
+  );
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {isEuropass ? <EuropassLayout /> : <StandardLayout />}
       </Page>
     </Document>
   );

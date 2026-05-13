@@ -11,12 +11,9 @@ interface Props {
 }
 
 const templates = [
-  { id: 1, name: 'Professional', color: '#0070f3' },
-  { id: 2, name: 'Minimal', color: '#333' },
-  { id: 3, name: 'Creative', color: '#e91e63' },
-  { id: 4, name: 'Modern', color: '#4caf50' },
-  { id: 5, name: 'Executive', color: '#3f51b5' },
-  { id: 6, name: 'Tech', color: '#00bcd4' },
+  { id: 1, name: 'Modern ATS (Harvard)', color: '#000' },
+  { id: 2, name: 'Europass (Clean)', color: '#0056b3' },
+  { id: 3, name: 'Executive Minimal', color: '#333' },
 ];
 
 export default function ResumePreview({ data }: Props) {
