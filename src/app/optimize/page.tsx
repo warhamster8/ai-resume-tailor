@@ -71,19 +71,28 @@ export default function OptimizePage() {
       // Salvataggio automatico nella cronologia
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { error: saveError } = await supabase.from('cv_history').insert({
-          user_id: user.id,
-          base_cv_data: baseCV,
-          optimized_cv_data: data,
-          target_company: companyName,
-          target_position: jobTitle,
-          is_base: false
-        });
+        console.log('Tentativo di salvataggio ottimizzazione per utente:', user.id);
+        const { error: saveError } = await supabase.from('cv_history').insert([
+          {
+            user_id: user.id,
+            base_cv_data: baseCV,
+            optimized_cv_data: data,
+            target_company: companyName,
+            target_position: jobTitle,
+            is_base: false
+          }
+        ]);
 
         if (saveError) {
-          console.error('Errore salvataggio DB:', saveError);
-          // Non blocchiamo la preview se il salvataggio fallisce, ma avvisiamo
-          alert('Attenzione: Il CV è stato generato ma non è stato possibile salvarlo nella cronologia.');
+          console.error('ERRORE SUPABASE DURANTE IL SALVATAGGIO:', saveError);
+          // Se l'errore è un "duplicate key", conferma la mia teoria sul vincolo UNIQUE
+          if (saveError.code === '23505') {
+            alert('Errore Database: Il sistema permette solo una ottimizzazione. Esegui il comando SQL che ti ho fornito per sbloccare la cronologia.');
+          } else {
+            alert(`Errore salvataggio: ${saveError.message}`);
+          }
+        } else {
+          console.log('Ottimizzazione salvata con successo!');
         }
       }
 
