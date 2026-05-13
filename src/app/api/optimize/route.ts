@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
+export const maxDuration = 60; // Aumenta il timeout a 60 secondi per Vercel
+
 export async function POST(req: Request) {
   if (!API_KEY) {
     return NextResponse.json({ message: "API Key DeepSeek non configurata" }, { status: 500 });
@@ -11,46 +13,32 @@ export async function POST(req: Request) {
   try {
     const { baseData, jobTitle, jobDescription, targetLanguage, refinement } = await req.json();
 
-    const experienceWithIndex = baseData.experience.map((exp: any, i: number) => ({
-      index: i,
-      company: exp.company,
-      originalPosition: exp.position,
-      originalDescription: exp.description,
-    }));
-
-    let systemPrompt = `MANDATO LINGUISTICO SUPREMO: DEVI SCRIVERE TUTTO ESCLUSIVAMENTE IN LINGUA ${targetLanguage.toUpperCase()}.
-
-Sei un Senior Executive Recruiter esperto in ottimizzazione ATS. Ottimizza il CV per "${jobTitle}".
-
-LOGICA REBRANDING TITOLI:
-1. TRADUZIONE STANDARD: Traduci i titoli interni in ruoli standard di mercato.
-2. DIVIETO CLONING: È VIETATO copiare esattamente il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi professionali.
-3. VARIAZIONI: Se l'utente chiede raffinamenti, fornisci alternative diverse da quelle precedenti.
-
-REGOLE CONTENUTO:
-- LIVELLI SKILL REALISTICI.
-- Includi sempre "AI-Assisted Development / Vibe-Coding".
-- NO CERTIFICAZIONI FALSE.`;
-
-    if (refinement) {
-      systemPrompt += `\n\nRICHIESTA DI RAFFINAMENTO: L'utente ha già una versione ottimizzata ma vuole apportare questa modifica specifica: "${refinement}". Applica questa modifica mantenendo il resto del CV coerente.`;
-    }
+    const systemPrompt = `MANDATO LINGUISTICO SUPREMO: SCRIVI ESCLUSIVAMENTE IN ${targetLanguage.toUpperCase()}.
+    
+    Sei un esperto Senior Recruiter e ATS Optimizer. Ottimizza il CV per il ruolo di "${jobTitle}".
+    
+    LOGICA REBRANDING:
+    - Trasforma i titoli di lavoro in ruoli standard di mercato.
+    - NON clonare esattamente "${jobTitle}", usa sinonimi professionali.
+    - Includi sempre riferimenti a "AI-Assisted Development" o "Vibe-coding".
+    
+    FORMATO RISPOSTA: Devi rispondere ESCLUSIVAMENTE con un oggetto JSON valido.`;
 
     const userPrompt = `
-    LINGUA RICHIESTA: ${targetLanguage.toUpperCase()}
+    Lingua: ${targetLanguage.toUpperCase()}
     Job Target: ${jobTitle}
-    Dati Base CV: ${JSON.stringify(baseData)}
-    Esperienze da ottimizzare: ${JSON.stringify(experienceWithIndex)}
-    ${refinement ? `COMANDO UTENTE: ${refinement}` : ""}
+    Job Description: ${jobDescription}
+    CV Attuale: ${JSON.stringify(baseData)}
+    ${refinement ? `MODIFICA RICHIESTA: ${refinement}` : ""}
     
-    STRUTTURA JSON OBBLIGATORIA:
+    Genera un JSON con questa struttura:
     {
-      "personalInfo": { "summary": "...", "originalSummary": "...", "changeReason": "..." },
+      "personalInfo": { "summary": "...", "changeReason": "..." },
       "experience": [
-        { "index": 0, "newPosition": "...", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
+        { "index": 0, "newPosition": "...", "newDescription": "...", "changeReason": "..." }
       ],
       "skills": [ { "name": "...", "level": "..." } ],
-      "atsScore": 85
+      "atsScore": 90
     }`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
@@ -66,19 +54,22 @@ REGOLE CONTENUTO:
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: refinement ? 0.4 : 0.2, // Più flessibilità se stiamo chiedendo varianti
+        temperature: refinement ? 0.4 : 0.2,
       }),
     });
 
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("DeepSeek API Error:", errText);
+      throw new Error(`API Error: ${response.status}`);
+    }
 
     const resData = await response.json();
-    let rawContent = resData.choices[0].message.content;
-    rawContent = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
-    
+    const rawContent = resData.choices[0].message.content;
     const optimizedContent = JSON.parse(rawContent);
 
-    const mergedExperience = baseData.experience.map((exp: any, i: number) => {
+    // Merge robusto delle esperienze
+    const mergedExperience = (baseData.experience || []).map((exp: any, i: number) => {
       const opt = optimizedContent.experience?.find((e: any) => e.index === i) || optimizedContent.experience?.[i];
       if (opt) {
         return {
@@ -86,8 +77,8 @@ REGOLE CONTENUTO:
           position: opt.newPosition || exp.position,
           description: opt.newDescription || exp.description,
           _metadata: {
-            originalPosition: opt.originalPosition || exp.position,
-            originalDescription: opt.originalDescription || exp.description,
+            originalPosition: exp.position,
+            originalDescription: exp.description,
             reason: opt.changeReason || "",
           },
         };
@@ -101,17 +92,20 @@ REGOLE CONTENUTO:
         ...baseData.personalInfo,
         summary: optimizedContent.personalInfo?.summary || baseData.personalInfo.summary,
         _metadata: {
-          original: optimizedContent.personalInfo?.originalSummary || baseData.personalInfo.summary,
+          original: baseData.personalInfo.summary,
           reason: optimizedContent.personalInfo?.changeReason || "",
         },
       },
       experience: mergedExperience,
-      skills: optimizedContent.skills?.length > 0 ? optimizedContent.skills : baseData.skills,
+      skills: optimizedContent.skills || baseData.skills,
       atsScore: optimizedContent.atsScore || 70,
     });
 
-  } catch (error) {
-    console.error("Refinement Error:", error);
-    return NextResponse.json({ message: "Errore durante il raffinamento." }, { status: 500 });
+  } catch (error: any) {
+    console.error("Optimize Route Error:", error);
+    return NextResponse.json({ 
+      message: "Errore durante l'ottimizzazione.",
+      details: error.message 
+    }, { status: 500 });
   }
 }
