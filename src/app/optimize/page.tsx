@@ -3,8 +3,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ResumeData, OptimizedResumeData } from '@/types/resume';
-import ResumePreview from '@/components/pdf/ResumePreview';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+
+const ResumePreview = dynamic(() => import('@/components/pdf/ResumePreview'), {
+  ssr: false,
+});
 
 export default function OptimizePage() {
   const router = useRouter();

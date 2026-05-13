@@ -5,8 +5,12 @@ export interface PersonalInfo {
   location: string;
   website?: string;
   linkedin?: string;
-  summary: string;
   title?: string;
+  summary: any;
+  _metadata?: {
+    original?: string;
+    reason?: string;
+  };
 }
 
 export interface Experience {
