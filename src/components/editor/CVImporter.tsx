@@ -11,6 +11,7 @@ interface Props {
 export default function CVImporter({ onDataParsed }: Props) {
   const [isUploading, setIsUploading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'parsing' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -18,6 +19,7 @@ export default function CVImporter({ onDataParsed }: Props) {
 
     setIsUploading(true);
     setStatus('parsing');
+    setErrorMessage(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -28,14 +30,18 @@ export default function CVImporter({ onDataParsed }: Props) {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Errore nel caricamento');
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Errore nel caricamento');
+      }
+
       onDataParsed(data);
       setStatus('success');
       setTimeout(() => setStatus('idle'), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setErrorMessage(error.message || 'Si è verificato un errore durante l\'importazione.');
       setStatus('error');
     } finally {
       setIsUploading(false);
@@ -80,7 +86,7 @@ export default function CVImporter({ onDataParsed }: Props) {
 
       {status === 'error' && (
         <p className="text-xs text-red-500 mt-2">
-          Si è verificato un errore durante l'importazione. Riprova con un altro file.
+          {errorMessage || 'Si è verificato un errore durante l\'importazione. Riprova con un altro file.'}
         </p>
       )}
     </div>
