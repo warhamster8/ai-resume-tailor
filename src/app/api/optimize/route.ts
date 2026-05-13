@@ -27,6 +27,8 @@ REGOLE DI REBRANDING TITOLI (CRITICO):
 
 REGOLE COMPETENZE (SKILLS):
 - Riscrivi e riorganizza la lista delle competenze.
+- LIVELLI REALISTICI: NON mettere tutto come "Expert". Usa un mix bilanciato (Intermediate, Advanced, Expert). Sii onesto e credibile.
+- AGGIUNGI SEMPRE (se pertinente): "AI-Assisted Development" o "Vibe-Coding / Prompt Engineering" come competenza, riflettendo la capacità dell'utente di usare l'IA per velocizzare i processi.
 - Dai priorità alle skill più rilevanti per la Job Description fornita.
 - Deduci skill realistiche (es. se usa Teamcenter, deduci "PLM Management").
 
