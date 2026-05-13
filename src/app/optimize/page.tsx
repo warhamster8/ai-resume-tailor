@@ -11,6 +11,7 @@ export default function OptimizePage() {
   const [jobTitle, setJobTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
+  const [language, setLanguage] = useState<'it' | 'en'>('it');
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedData, setOptimizedData] = useState<OptimizedResumeData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +56,8 @@ export default function OptimizePage() {
         body: JSON.stringify({ 
           baseData: baseCV, 
           jobTitle, 
-          jobDescription 
+          jobDescription,
+          targetLanguage: language === 'it' ? 'ITALIANO' : 'INGLESE'
         }),
       });
 
@@ -97,9 +99,27 @@ export default function OptimizePage() {
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-4 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Ottimizza il tuo CV</h1>
-        <p className="text-secondary mt-2">Personalizza il tuo CV per una specifica azienda e posizione.</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Ottimizza il tuo CV</h1>
+          <p className="text-secondary mt-2">Personalizza il tuo CV per una specifica azienda e posizione.</p>
+        </div>
+        
+        {/* Selettore Lingua */}
+        <div className="flex items-center gap-2 bg-muted p-1 rounded-xl border border-border shadow-sm">
+          <button
+            onClick={() => setLanguage('it')}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${language === 'it' ? 'bg-white shadow-sm text-accent' : 'text-secondary hover:text-foreground'}`}
+          >
+            🇮🇹 ITA
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all ${language === 'en' ? 'bg-white shadow-sm text-accent' : 'text-secondary hover:text-foreground'}`}
+          >
+            🇬🇧 ENG
+          </button>
+        </div>
       </div>
 
       <div className="crisp-card p-6 space-y-6">
@@ -155,7 +175,7 @@ export default function OptimizePage() {
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              Genera Versione Ottimizzata <CheckCircle2 className="w-5 h-5" />
+              Genera Versione Ottimizzata in {language === 'it' ? 'Italiano' : 'Inglese'} <CheckCircle2 className="w-5 h-5" />
             </>
           )}
         </button>

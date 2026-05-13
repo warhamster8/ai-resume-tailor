@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { baseData, jobTitle, jobDescription } = await req.json();
+    const { baseData, jobTitle, jobDescription, targetLanguage } = await req.json();
 
     // Prepariamo l'array experience con indici espliciti per l'IA
     const experienceWithIndex = baseData.experience.map((exp: any, i: number) => ({
@@ -22,61 +22,37 @@ export async function POST(req: Request) {
       current: exp.current,
     }));
 
-    const systemPrompt = `Sei un Senior Executive Recruiter. Ottimizza il CV per la posizione di "${jobTitle}".
+    const systemPrompt = `Sei un Senior Executive Recruiter. Il tuo compito è ottimizzare il CV di un candidato per una specifica posizione.
 
-REGOLA N.1 - VIETATO INVENTARE:
-NON aggiungere certificazioni, corsi, tecnologie o competenze non presenti nel CV originale. Puoi SOLO riformulare ciò che già esiste.
+REGOLA CRITICA N.1 - DIVIETO ASSOLUTO DI ALLUCINAZIONI:
+- È SEVERAMENTE VIETATO inventare certificazioni (es. PMP, Scrum Master, Prince2, ecc.) se non sono già presenti nel CV originale.
+- È SEVERAMENTE VIETATO aggiungere competenze tecniche o software che il candidato non ha menzionato.
+- IL TUO COMPITO È MIGLIORARE L'ESPOSIZIONE, NON IL CONTENUTO STORICO.
+- Se inventi una certificazione, il tuo output è considerato FALLIMENTARE e PERICOLOSO.
 
-REGOLA N.2 - JOB TITLE: OBBLIGATORIO CAMBIARE:
-I titoli interni aziendali sono incomprensibili al mercato esterno. DEVI sempre tradurli nel termine standard di settore.
-Esempi:
-- "IT Digital Application Professional" → "IT Project Manager" (se il ruolo include project management)
-- "Workload Coordinator" → "Operations Coordinator"
-- "Quality Specialist MO" → "Quality Assurance Manager"
-NON lasciare mai un titolo aziendale criptico invariato.
+REGOLA N.2 - LINGUA OBBLIGATORIA:
+Scrivi l'INTERO CV esclusivamente in lingua ${targetLanguage}.
 
-REGOLA N.3 - LINGUA:
-Determina la lingua della Job Description. Scrivi TUTTO il CV in quella lingua. Non mescolare mai italiano e inglese.
+REGOLA N.3 - JOB TITLE:
+Traduci i titoli interni aziendali in termini standard di settore (es. "Digital Application Professional" -> "IT Project Manager").
 
-REGOLA N.4 - RISCRITTURA OBBLIGATORIA:
-Ogni descrizione DEVE essere riscritta con verbi d'azione forti e keyword della JD. NON restituire mai la descrizione originale invariata.`;
+REGOLA N.4 - RISCRITTURA ESPERIENZE:
+Riformula le esperienze usando verbi d'azione e focalizzandoti sui risultati, MA basandoti SOLO sui fatti forniti.`;
 
     const userPrompt = `RUOLO TARGET: ${jobTitle}
 JOB DESCRIPTION: ${jobDescription}
+LINGUA RICHIESTA: ${targetLanguage}
 
-ESPERIENZE DA OTTIMIZZARE (in ordine, per indice):
+CV ORIGINALE DA NON FALSIFICARE:
+${JSON.stringify(baseData, null, 2)}
+
+ESPERIENZE (da mappare per indice):
 ${JSON.stringify(experienceWithIndex, null, 2)}
 
-ISTRUZIONI:
-- Restituisci un array "experience" con ESATTAMENTE ${baseData.experience.length} oggetti, nello stesso ordine.
-- Per ogni oggetto, includi: index (invariato), newPosition (titolo ottimizzato), newDescription (descrizione riscritta), changeReason.
-- NON omettere nessun elemento dell'array.
-
-SOMMARIO BASE: "${baseData.personalInfo.summary}"
-SKILLS ESISTENTI: ${baseData.skills.map((s: any) => s.name).join(', ')}
-
-RISPONDI IN JSON:
-{
-  "personalInfo": {
-    "summary": "Sommario completamente riscritto e potente",
-    "originalSummary": "Il sommario originale copiato esattamente",
-    "changeReason": "Perché questo è meglio"
-  },
-  "experience": [
-    {
-      "index": 0,
-      "newPosition": "Titolo standard di mercato",
-      "originalPosition": "Titolo originale",
-      "newDescription": "Descrizione riscritta con verbi d'azione e keyword della JD",
-      "originalDescription": "Descrizione originale",
-      "changeReason": "Motivazione"
-    }
-  ],
-  "skills": [
-    { "name": "Nome skill (SOLO quelle già esistenti nel CV)", "level": "Livello" }
-  ],
-  "atsScore": 95
-}`;
+ISTRUZIONI JSON:
+- Restituisci l'array "experience" con index, newPosition, newDescription, changeReason.
+- Restituisci "personalInfo" con summary, originalSummary, changeReason.
+- Restituisci "skills" con SOLO le competenze realmente presenti nel CV originale.`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -91,25 +67,19 @@ RISPONDI IN JSON:
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3,
+        temperature: 0.1, // Ridotto al minimo per eliminare le invenzioni
       }),
     });
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      console.error("DeepSeek API Error:", err);
       return NextResponse.json({ message: "Errore dall'API DeepSeek" }, { status: response.status });
     }
 
     const data = await response.json();
     const raw = data.choices[0].message.content;
-    console.log("AI raw response:", raw); // Debug log
-
     const optimizedContent = JSON.parse(raw);
 
-    // MERGE PER INDICE: molto più robusto del match per ID
     const mergedExperience = baseData.experience.map((exp: any, i: number) => {
-      // Cerca prima per indice esplicito, poi per posizione nell'array
       const opt = optimizedContent.experience?.find((e: any) => e.index === i)
         ?? optimizedContent.experience?.[i];
 
@@ -139,10 +109,8 @@ RISPONDI IN JSON:
         },
       },
       experience: mergedExperience,
-      // Skills: teniamo quelle originali come fallback sicuro
-      skills: optimizedContent.skills?.length > 0
-        ? optimizedContent.skills
-        : baseData.skills,
+      // Filtro extra: assicuriamoci che le skill non siano allucinate
+      skills: optimizedContent.skills?.length > 0 ? optimizedContent.skills : baseData.skills,
       atsScore: optimizedContent.atsScore,
     };
 
