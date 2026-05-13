@@ -33,7 +33,9 @@ export default function CVImporter({ onDataParsed }: Props) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Errore nel caricamento');
+        // Se il server ha inviato dei dettagli, usiamoli
+        const detailMsg = data.details ? ` (${data.details})` : '';
+        throw new Error((data.message || 'Errore nel caricamento') + detailMsg);
       }
 
       onDataParsed(data);

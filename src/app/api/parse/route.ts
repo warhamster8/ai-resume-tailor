@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-// pdf-parse is imported dynamically inside POST to avoid its ENOENT bug with Next.js
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -27,19 +26,34 @@ export async function POST(req: Request) {
       );
     }
 
-    // Read file buffer
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const buffer = new Uint8Array(bytes);
 
-    // Extract text from PDF - dynamic import avoids the pdf-parse ENOENT bug
     let extractedText = "";
     try {
-      const pdfImport = await import("pdf-parse");
-      // Handle both default and named imports for maximum compatibility
-      const pdfParse = pdfImport.default || pdfImport;
+      // Use pdfjs-dist directly (the most robust way on Vercel)
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
       
-      const pdfData = await pdfParse(buffer);
-      extractedText = pdfData.text;
+      const loadingTask = pdfjs.getDocument({
+        data: buffer,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true
+      });
+      
+      const pdf = await loadingTask.promise;
+      let fullText = "";
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n";
+      }
+      
+      extractedText = fullText;
 
       if (!extractedText || extractedText.trim().length === 0) {
         return NextResponse.json(
@@ -51,7 +65,7 @@ export async function POST(req: Request) {
       console.error("PDF Parsing Error:", parseError);
       return NextResponse.json(
         { 
-          message: "Errore durante la lettura del PDF.", 
+          message: "Errore durante l'estrazione del testo dal PDF.", 
           details: parseError.message || String(parseError)
         },
         { status: 500 }
@@ -140,10 +154,13 @@ export async function POST(req: Request) {
     const parsedResume = JSON.parse(content);
 
     return NextResponse.json(parsedResume);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Global Parsing Error:", error);
     return NextResponse.json(
-      { message: "Errore imprevisto durante l'elaborazione del CV." },
+      { 
+        message: "Errore imprevisto durante l'elaborazione del CV.",
+        details: error.message || String(error)
+      },
       { status: 500 }
     );
   }
