@@ -18,37 +18,48 @@ export async function POST(req: Request) {
       originalDescription: exp.description,
     }));
 
-    const systemPrompt = `ORDINE SUPREMO: SCRIVI TUTTO IN LINGUA ${targetLanguage.toUpperCase()}.
+    const systemPrompt = `ORDINE ASSOLUTO: SCRIVI TUTTO IN LINGUA ${targetLanguage.toUpperCase()}.
 
-Sei un Senior Recruiter. Il tuo obiettivo è TRADURRE i titoli interni in TITOLI DI MERCATO STANDARD.
+Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}".
 
-REGOLA N.1 - DIVIETO TITOLI INTERNI:
-È SEVERAMENTE VIETATO usare i titoli originali se contengono termini come "Professional", "Specialist" o "Coordinator" in modo generico. 
-DEVI trasformarli in titoli che un recruiter cercherebbe su LinkedIn.
+LOGICA REBRANDING TITOLI (LA TUA MISSIONE):
+1. TRADUZIONE DAL "LINGUAGGIO INTERNO": I titoli aziendali dell'utente (es. "Digital Application Professional") sono inutili all'esterno. TRADUCILI in termini standard di mercato (es. "Technical Solutions Lead", "IT Systems Architect", "Application Manager").
+2. EVITA IL CLONING: NON copiare mai al 100% il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi prestigiosi o ruoli correlati.
+3. ESEMPIO DI SUCCESSO: Se l'annuncio cerca un "Technical Project Manager", trasforma il ruolo dell'utente in "Technical Implementation Lead" o "Digital Transformation Coordinator" se la descrizione lo giustifica.
+4. COERENZA: Il nuovo titolo deve riflettere le responsabilità reali descritte.
 
-ESEMPI OBBLIGATORI DI REBRANDING:
-- "IT Digital Application Professional" -> "IT Project Manager" o "Digital Solutions Lead"
-- "IT PLM and Quality Specialist" -> "PLM Manager" o "Quality Assurance Lead"
-- "Diesel Studies and Workload Coordinator" -> "Engineering Operations Lead" o "Project Demand Planner"
-- Qualsiasi titolo "Professional" -> Deve diventare "Manager", "Lead", o "Specialist" (con area specifica).
-
-REGOLA N.2 - LA DESCRIZIONE COMANDA:
-Leggi la descrizione per capire il vero livello. Se l'utente gestiva processi complessi e team, usa "Manager" o "Lead", anche se il titolo originale era "Specialist".
-
-REGOLA N.3 - DIVIETO DI COPIA 1:1 (FONDAMENTALE):
-È SEVERAMENTE VIETATO che un titolo passato sia IDENTICO al titolo dell'annuncio target ("${jobTitle}"). 
-- Se l'annuncio è "Technical Project Manager", usa sinonimi come: "IT Project Lead", "Digital Delivery Manager", "Solutions Implementation Lead", "Senior Technical Specialist".
-- Usa varianti che suggeriscano competenza ma mantengano una distinzione formale.
-- Un titolo 1:1 è considerato un errore grave e sospetto.
-
-RISPONDI SOLO IN JSON.`;
+REGOLE COMPETENZE E GENERALI:
+- LIVELLI REALISTICI (Mix di Intermediate, Advanced, Expert).
+- Includi "AI-Assisted Development / Vibe-Coding" se l'utente usa strumenti moderni.
+- NO CERTIFICAZIONI FALSE.
+- RISPONDI SOLO CON UN OGGETTO JSON RISPETTANDO LA STRUTTURA RICHIESTA.`;
 
     const userPrompt = `
     LINGUA: ${targetLanguage.toUpperCase()}
-    Ruolo cercato: ${jobTitle}
+    Job Target: ${jobTitle}
+    Dati Base: ${JSON.stringify(baseData)}
+    Esperienze: ${JSON.stringify(experienceWithIndex)}
     
-    TRASFORMA QUESTI TITOLI INTERNI IN TITOLI PRESTIGIOSI DI MERCATO:
-    ${JSON.stringify(experienceWithIndex, null, 2)}`;
+    STRUTTURA JSON OBBLIGATORIA DA RESTITUIRE:
+    {
+      "personalInfo": { 
+        "summary": "Sommario riscritto e ottimizzato", 
+        "originalSummary": "Copia del summary originale", 
+        "changeReason": "Perché lo hai cambiato" 
+      },
+      "experience": [
+        { 
+          "index": 0, 
+          "newPosition": "TITOLO DI MERCATO (Non clonare il target, non usare l'originale se criptico)", 
+          "originalPosition": "Copia originale", 
+          "newDescription": "Descrizione riscritta", 
+          "originalDescription": "Copia originale", 
+          "changeReason": "Spiega la traduzione del titolo" 
+        }
+      ],
+      "skills": [ { "name": "Nome Skill", "level": "Livello (Beginner/Intermediate/Advanced/Expert)" } ],
+      "atsScore": 85
+    }`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -63,7 +74,7 @@ RISPONDI SOLO IN JSON.`;
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.4, // Aumentata per favorire la "traduzione creativa" dei titoli
+        temperature: 0.3, 
       }),
     });
 
@@ -76,10 +87,12 @@ RISPONDI SOLO IN JSON.`;
     const optimizedContent = JSON.parse(rawContent);
 
     const mergedExperience = baseData.experience.map((exp: any, i: number) => {
+      // Troviamo l'esperienza corrispondente tramite l'indice per massima sicurezza
       const opt = optimizedContent.experience?.find((e: any) => e.index === i) || optimizedContent.experience?.[i];
       if (opt) {
         return {
           ...exp,
+          // Assicuriamoci che newPosition esista, altrimenti usiamo l'originale
           position: opt.newPosition || exp.position,
           description: opt.newDescription || exp.description,
           _metadata: {
@@ -103,11 +116,12 @@ RISPONDI SOLO IN JSON.`;
         },
       },
       experience: mergedExperience,
-      skills: optimizedContent.skills || baseData.skills,
+      skills: optimizedContent.skills?.length > 0 ? optimizedContent.skills : baseData.skills,
       atsScore: optimizedContent.atsScore || 70,
     });
 
   } catch (error) {
+    console.error("Critical Optimization Error:", error);
     return NextResponse.json({ message: "Errore durante l'ottimizzazione." }, { status: 500 });
   }
 }
