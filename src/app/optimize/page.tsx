@@ -6,21 +6,15 @@ import { ResumeData, OptimizedResumeData } from '@/types/resume';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import ResumeHTMLPreview from '@/components/preview/ResumeHTMLPreview';
+const ResumeHTMLPreview = dynamic(() => import('@/components/preview/ResumeHTMLPreview'), {
+  ssr: false,
+});
 const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), {
   ssr: false,
 });
 
 export default function OptimizePage() {
-  return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    }>
-      <OptimizePageContent />
-    </Suspense>
-  );
+  return <OptimizePageContent />;
 }
 
 function OptimizePageContent() {
@@ -37,6 +31,19 @@ function OptimizePageContent() {
   const [optimizedData, setOptimizedData] = useState<OptimizedResumeData | null>(null);
   const [error, setError] = useState('');
   const [refinementLoading, setRefinementLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     async function loadInitialData() {

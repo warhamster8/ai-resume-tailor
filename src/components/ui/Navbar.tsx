@@ -10,7 +10,10 @@ export default function Navbar() {
   const [session, setSession] = useState<any>(null);
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
@@ -21,6 +24,10 @@ export default function Navbar() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  if (!mounted) return (
+    <nav className="border-b border-border bg-background sticky top-0 z-50 h-16" />
+  );
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
