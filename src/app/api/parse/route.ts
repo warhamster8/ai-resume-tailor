@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PDFParse } from "pdf-parse";
+// pdf-parse is imported dynamically inside POST to avoid its ENOENT bug with Next.js
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -31,14 +31,11 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Extract text from PDF using modern PDFParse (v2+)
+    // Extract text from PDF - dynamic import avoids the pdf-parse ENOENT bug
     let extractedText = "";
     try {
-      const parser = new PDFParse({ 
-        data: buffer,
-        verbosity: 0 
-      });
-      const pdfData = await parser.getText();
+      const pdfParse = (await import("pdf-parse")).default;
+      const pdfData = await pdfParse(buffer);
       extractedText = pdfData.text;
 
       if (!extractedText || extractedText.trim().length === 0) {
