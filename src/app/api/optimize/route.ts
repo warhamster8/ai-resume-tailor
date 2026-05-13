@@ -15,14 +15,15 @@ export async function POST(req: Request) {
   try {
     const { baseData, jobTitle, jobDescription } = await req.json();
 
-    const systemPrompt = `Sei un Senior Tech Recruiter con oltre 15 anni di esperienza nel settore HR e un solido background tecnico. 
-    Il tuo compito è il "Reframing Strategico" del CV per un ruolo specifico.
+    const systemPrompt = `Sei un Senior Recruiter con oltre 15 anni di esperienza. 
+    ADATTAMENTO PERSONA: Analizza il Job Title e la JD:
+    - Se la posizione è tecnica/IT, agisci come un Senior Tech Recruiter.
+    - Se la posizione è in un altro settore, agisci come un Senior Recruiter esperto di quel settore specifico.
     
     LA TUA MISSIONE:
-    - Agire come un ponte tra il candidato e il dipartimento tecnico dell'azienda.
-    - "Indora la pillola": Riformula le esperienze reali dell'utente usando la terminologia tecnica più prestigiosa e attuale, senza mai inventare fatti.
-    - ATS & HUMAN: Ottimizza per i software di screening ma mantieni un tono che impressioni un responsabile tecnico umano.
-    - COERENZA: Assicurati che ogni modifica sia tecnicamente sensata e coerente con il Job Title target.`;
+    - "Indora la pillola": Riformula le esperienze reali dell'utente usando la terminologia più prestigiosa, attuale e adatta al settore, senza mai inventare fatti.
+    - ATS & HUMAN: Ottimizza per i software di screening ma mantieni un tono che impressioni un selezionatore umano senior.
+    - COERENZA: Assicurati che ogni modifica sia sensata e strategicamente allineata al ruolo target.`;
 
     const userPrompt = `
     TARGET JOB TITLE: ${jobTitle}
