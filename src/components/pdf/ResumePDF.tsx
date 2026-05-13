@@ -15,7 +15,6 @@ export default function ResumePDF({ data, templateId }: Props) {
   const isEmerald = templateId === 5;
   const isSlate = templateId === 6;
 
-  // Selezione dati
   const displayData = isOriginal ? {
     ...data,
     personalInfo: {
@@ -29,7 +28,6 @@ export default function ResumePDF({ data, templateId }: Props) {
     }))
   } : data;
 
-  // Palette Colori
   const colors = {
     blue: { primary: '#1d4ed8', secondary: '#eff6ff', text: '#1e3a8a', sidebar: '#1d4ed8' },
     emerald: { primary: '#064e3b', secondary: '#ecfdf5', text: '#064e3b', sidebar: '#064e3b' },
@@ -41,51 +39,42 @@ export default function ResumePDF({ data, templateId }: Props) {
 
   const styles = StyleSheet.create({
     page: {
-      padding: isSlate ? 0 : 40,
+      padding: isSlate ? 0 : 0, // Gestiamo il padding internamente per coerenza
       fontFamily: 'Helvetica',
       fontSize: 9,
       lineHeight: 1.4,
       color: '#333',
     },
-    // Layout 2 Colonne (Blue & Emerald)
     container: { flexDirection: 'row', height: '100%' },
     sidebar: {
       width: '32%',
       backgroundColor: theme.sidebar,
-      padding: 25,
-      color: (isBlue || isEmerald) ? '#fff' : theme.text,
+      padding: 20,
+      color: (isBlue || isEmerald) ? '#fff' : '#333',
     },
     main: {
       width: '68%',
       padding: 30,
       backgroundColor: '#fff',
     },
-    // Layout Slate (Modern Full Width)
-    slateHeader: {
-      backgroundColor: theme.primary,
-      padding: 40,
-      color: '#fff',
-    },
-    slateBody: { padding: 40 },
-    
-    // Elementi comuni
-    name: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 5,
-    },
-    title: {
-      fontSize: 10,
-      fontWeight: 'bold',
-      textTransform: 'uppercase',
-      letterSpacing: 1,
-      marginBottom: 15,
+    sidebarHeader: {
+      marginBottom: 25,
       borderBottomWidth: 1,
-      borderBottomColor: (isBlue || isEmerald) ? 'rgba(255,255,255,0.2)' : theme.primary,
-      paddingBottom: 3,
+      borderBottomColor: 'rgba(255,255,255,0.2)',
+      paddingBottom: 15,
+    },
+    name: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+    contactText: {
+      fontSize: 7.5,
+      marginBottom: 3,
+      opacity: 0.9,
     },
     sectionTitle: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: 'bold',
       textTransform: 'uppercase',
       color: theme.primary,
@@ -95,54 +84,73 @@ export default function ResumePDF({ data, templateId }: Props) {
       borderBottomColor: theme.secondary,
       paddingBottom: 4,
     },
+    sidebarTitle: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginTop: 20,
+      marginBottom: 10,
+      color: (isBlue || isEmerald) ? '#fff' : theme.primary,
+      borderBottomWidth: 1,
+      borderBottomColor: 'rgba(255,255,255,0.2)',
+      paddingBottom: 3,
+    },
     expItem: { marginBottom: 15 },
     expHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
     company: { fontWeight: 'bold', fontSize: 10, color: '#111' },
-    position: { fontStyle: 'italic', fontWeight: 'bold', color: theme.primary },
+    position: { fontStyle: 'italic', fontWeight: 'bold', color: theme.primary, fontSize: 9.5 },
     date: { fontSize: 8, color: '#666' },
-    desc: { fontSize: 8.5, textAlign: 'justify', marginTop: 4 },
-    skillTag: {
-      fontSize: 8,
-      padding: '3 6',
-      backgroundColor: theme.secondary,
-      color: theme.primary,
-      borderRadius: 4,
-      marginRight: 5,
-      marginBottom: 5,
+    desc: { fontSize: 8.5, textAlign: 'justify', marginTop: 4, lineHeight: 1.3 },
+    skillItem: {
+      marginBottom: 8,
+    },
+    skillName: {
+      fontSize: 8.5,
+      fontWeight: 'bold',
+    },
+    skillLevel: {
+      fontSize: 7,
+      opacity: 0.8,
     }
   });
 
   const TwoColumnLayout = () => (
     <View style={styles.container}>
       <View style={styles.sidebar}>
-        <Text style={styles.name}>{displayData.personalInfo.fullName}</Text>
-        <Text style={{ fontSize: 8, marginBottom: 20, opacity: 0.8 }}>{displayData.personalInfo.email} | {displayData.personalInfo.phone}</Text>
+        <View style={styles.sidebarHeader}>
+          <Text style={styles.name}>{displayData.personalInfo.fullName}</Text>
+          <Text style={styles.contactText}>{displayData.personalInfo.email}</Text>
+          <Text style={styles.contactText}>{displayData.personalInfo.phone}</Text>
+          <Text style={styles.contactText}>{displayData.personalInfo.location}</Text>
+        </View>
         
-        <Text style={styles.title}>Competenze</Text>
+        <Text style={styles.sidebarTitle}>Competenze</Text>
         {displayData.skills.map((s, i) => (
-          <View key={i} style={{ marginBottom: 8 }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 8.5 }}>{s.name}</Text>
-            <Text style={{ fontSize: 7.5, opacity: 0.7 }}>{s.level}</Text>
+          <View key={i} style={styles.skillItem}>
+            <Text style={styles.skillName}>{s.name}</Text>
+            <Text style={styles.skillLevel}>{s.level}</Text>
           </View>
         ))}
 
         {displayData.education && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={styles.title}>Istruzione</Text>
+          <View>
+            <Text style={styles.sidebarTitle}>Istruzione</Text>
             {displayData.education.map((edu: any, i: number) => (
               <View key={i} style={{ marginBottom: 10 }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 8.5 }}>{edu.degree}</Text>
-                <Text style={{ fontSize: 7.5, opacity: 0.7 }}>{edu.school}</Text>
+                <Text style={{ fontSize: 7.5, opacity: 0.8 }}>{edu.school}</Text>
               </View>
             ))}
           </View>
         )}
       </View>
+      
       <View style={styles.main}>
-        <Text style={styles.sectionTitle}>Profilo</Text>
+        <Text style={[styles.sectionTitle, { marginTop: 0 }]}>Profilo Professionale</Text>
         <Text style={styles.desc}>{displayData.personalInfo.summary}</Text>
         
-        <Text style={styles.sectionTitle}>Esperienza</Text>
+        <Text style={styles.sectionTitle}>Esperienza Lavorativa</Text>
         {displayData.experience.map((exp: any, i: number) => (
           <View key={i} style={styles.expItem}>
             <View style={styles.expHeader}>
@@ -157,13 +165,14 @@ export default function ResumePDF({ data, templateId }: Props) {
     </View>
   );
 
+  // Layout Slate (Modern Full Width)
   const SlateLayout = () => (
     <View>
-      <View style={styles.slateHeader}>
-        <Text style={styles.name}>{displayData.personalInfo.fullName}</Text>
+      <View style={{ backgroundColor: theme.primary, padding: 30, color: '#fff' }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 5 }}>{displayData.personalInfo.fullName}</Text>
         <Text style={{ fontSize: 9, opacity: 0.9 }}>{displayData.personalInfo.email} • {displayData.personalInfo.phone} • {displayData.personalInfo.location}</Text>
       </View>
-      <View style={styles.slateBody}>
+      <View style={{ padding: 30 }}>
         <Text style={styles.sectionTitle}>Profilo Professionale</Text>
         <Text style={styles.desc}>{displayData.personalInfo.summary}</Text>
 
@@ -180,9 +189,12 @@ export default function ResumePDF({ data, templateId }: Props) {
         ))}
 
         <Text style={styles.sectionTitle}>Competenze & Skill</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 5 }}>
           {displayData.skills.map((s, i) => (
-            <Text key={i} style={styles.skillTag}>{s.name} ({s.level})</Text>
+            <Text key={i} style={{ 
+              fontSize: 8, padding: '3 8', backgroundColor: theme.secondary, 
+              color: theme.primary, borderRadius: 4, marginRight: 5, marginBottom: 5 
+            }}>{s.name} ({s.level})</Text>
           ))}
         </View>
       </View>

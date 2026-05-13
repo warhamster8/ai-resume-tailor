@@ -20,25 +20,33 @@ export async function POST(req: Request) {
 
     const systemPrompt = `Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}" in lingua ${targetLanguage}.
 
-REGOLE:
-1. NO CERTIFICAZIONI FALSE: Non inventare certificazioni (PMP, Scrum, ecc.).
-2. DEDUZIONE SKILLS: Aggiungi skill realistiche dedotte dalle descrizioni (es. Stakeholder Management).
-3. REBRANDING TITOLI: Usa la descrizione come fonte di verità per il nuovo Job Title.
-4. LINGUA: Tutto in ${targetLanguage}.
+REGOLE DI REBRANDING TITOLI (CRITICO):
+- NON usare il Job Title target ("${jobTitle}") in modo identico nelle tue esperienze passate se non è vero. È sospetto e poco credibile.
+- Usa titoli che siano "ponti" verso il ruolo target. Esempio: Se punta a "Project Manager", usa "Lead Implementation Specialist" o "Operations Coordinator" per le esperienze passate, non "Project Manager" ovunque.
+- Il rebranding deve essere sottile e basato sui fatti reali della descrizione.
 
-RISPONDI ESCLUSIVAMENTE CON UN OGGETTO JSON VALIDO. NO TESTO EXTRA.`;
+REGOLE COMPETENZE (SKILLS):
+- Riscrivi e riorganizza la lista delle competenze.
+- Dai priorità alle skill più rilevanti per la Job Description fornita.
+- Deduci skill realistiche (es. se usa Teamcenter, deduci "PLM Management").
+
+REGOLE GENERALI:
+- NO CERTIFICAZIONI FALSE.
+- LINGUA: Tutto in ${targetLanguage}.
+- RISPONDI SOLO CON JSON.`;
 
     const userPrompt = `
-    Dati: ${JSON.stringify(baseData)}
+    Dati base: ${JSON.stringify(baseData)}
     Esperienze: ${JSON.stringify(experienceWithIndex)}
+    Job Description: ${jobDescription}
     
-    Struttura richiesta:
+    Struttura:
     {
       "personalInfo": { "summary": "...", "originalSummary": "...", "changeReason": "..." },
       "experience": [
-        { "index": 0, "newPosition": "...", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
+        { "index": 0, "newPosition": "Titolo credibile e non forzato", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
       ],
-      "skills": [ { "name": "...", "level": "..." } ],
+      "skills": [ { "name": "Skill ottimizzata", "level": "Livello" } ],
       "atsScore": 95
     }`;
 
@@ -63,8 +71,6 @@ RISPONDI ESCLUSIVAMENTE CON UN OGGETTO JSON VALIDO. NO TESTO EXTRA.`;
 
     const resData = await response.json();
     let rawContent = resData.choices[0].message.content;
-
-    // Pulizia robusta del JSON (rimuove eventuali backticks markdown)
     rawContent = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
     
     const optimizedContent = JSON.parse(rawContent);
@@ -102,7 +108,7 @@ RISPONDI ESCLUSIVAMENTE CON UN OGGETTO JSON VALIDO. NO TESTO EXTRA.`;
     });
 
   } catch (error) {
-    console.error("Critical Optimization Error:", error);
-    return NextResponse.json({ message: "Errore durante l'elaborazione dei dati dell'IA." }, { status: 500 });
+    console.error("Optimization Error:", error);
+    return NextResponse.json({ message: "Errore IA" }, { status: 500 });
   }
 }
