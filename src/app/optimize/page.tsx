@@ -6,7 +6,8 @@ import { ResumeData, OptimizedResumeData } from '@/types/resume';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const ResumePreview = dynamic(() => import('@/components/pdf/ResumePreview'), {
+import ResumeHTMLPreview from '@/components/preview/ResumeHTMLPreview';
+const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButton'), {
   ssr: false,
 });
 
@@ -47,10 +48,8 @@ function OptimizePageContent() {
         }
 
         const id = searchParams.get('id');
-        console.log('OptimizePage: ID found in URL:', id);
         
         if (id) {
-          console.log('OptimizePage: Fetching specific record...');
           const { data, error: fetchError } = await supabase
             .from('cv_history')
             .select('*')
@@ -58,12 +57,10 @@ function OptimizePageContent() {
             .single();
 
           if (fetchError) {
-            console.error('OptimizePage: Error fetching record:', fetchError);
-            setError('Impossibile caricare l\'ottimizzazione. Verifica la connessione.');
+            setError('Impossibile caricare l\'ottimizzazione.');
           }
 
           if (data) {
-            console.log('OptimizePage: Data loaded successfully');
             setOptimizedData(data.optimized_cv_data);
             setCompanyName(data.target_company);
             setJobTitle(data.target_position);
@@ -71,13 +68,10 @@ function OptimizePageContent() {
             setBaseCV(data.base_cv_data);
             setCurrentRecordId(data.id);
             return;
-          } else {
-            console.warn('OptimizePage: No data found for ID:', id);
           }
         }
 
-        console.log('OptimizePage: Loading base CV...');
-        const { data: baseData, error: baseError } = await supabase
+        const { data: baseData } = await supabase
           .from('cv_history')
           .select('base_cv_data')
           .eq('user_id', user.id)
@@ -86,8 +80,6 @@ function OptimizePageContent() {
 
         if (baseData) {
           setBaseCV(baseData.base_cv_data);
-        } else if (baseError) {
-          console.error('Error loading base CV:', baseError);
         }
       } finally {
         setInitialLoading(false);
@@ -212,7 +204,7 @@ function OptimizePageContent() {
         </div>
         <div className="flex gap-3">
           {optimizedData && (
-             <button onClick={() => window.print()} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold">Scarica PDF</button>
+             <PDFDownloadButton data={optimizedData} fileName={`${companyName || 'Resume'}_${jobTitle || 'Optimized'}.pdf`} />
           )}
         </div>
       </div>
@@ -275,7 +267,7 @@ function OptimizePageContent() {
         <div className="flex-1 bg-slate-200 overflow-y-auto p-4 md:p-12 flex justify-center items-start">
           {optimizedData ? (
             <div className="w-full max-w-4xl shadow-2xl rounded-lg overflow-hidden">
-               <ResumePreview data={optimizedData} />
+               <ResumeHTMLPreview data={optimizedData} templateId={7} />
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">

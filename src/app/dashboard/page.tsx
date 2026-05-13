@@ -33,8 +33,7 @@ export default function Dashboard() {
       setBaseCV(cvData.find(cv => cv.is_base));
       setHistory(cvData.filter(cv => !cv.is_base));
     }
-    setLoading(true); // Simuliamo un caricamento veloce per lo stato UI
-    setTimeout(() => setLoading(false), 500);
+    setLoading(false);
   }
 
   const handleDelete = async (id: string) => {
