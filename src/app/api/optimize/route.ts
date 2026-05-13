@@ -15,14 +15,16 @@ export async function POST(req: Request) {
   try {
     const { baseData, jobDescription } = await req.json();
 
-    const systemPrompt = `Sei un esperto HR e specialista ATS. 
-    Il tuo compito è ottimizzare il CV dell'utente per una specifica Job Description.
-    REGOLE CRITICHE:
-    1. NON INVENTARE esperienze lavorative o titoli di studio.
-    2. Enfatizza le competenze e le esperienze esistenti che sono più rilevanti per la posizione.
-    3. Usa parole chiave della Job Description in modo naturale.
-    4. Adatta il tono del riepilogo professionale.
-    5. Restituisci ESCLUSIVAMENTE un oggetto JSON valido che segua la struttura fornita.`;
+    const systemPrompt = `Sei un esperto Senior HR e specialista certificato in sistemi ATS (Applicant Tracking System). 
+    Il tuo obiettivo è riscrivere le sezioni del CV dell'utente per massimizzare la compatibilità con una specifica Job Description (JD).
+
+    LINEE GUIDA CRITICHE PER L'OTTIMIZZAZIONE:
+    1. KEYWORDS: Identifica le "hard skills" e le parole chiave tecniche nella JD e integrane il maggior numero possibile nel CV in modo naturale.
+    2. VERBI D'AZIONE: Inizia ogni punto dell'esperienza lavorativa con verbi d'azione forti (es: Implementato, Guidato, Massimizzato, Progettato).
+    3. TENSIONE AI RISULTATI: Trasforma compiti generici in risultati misurabili dove possibile.
+    4. TERMINOLOGIA: Usa l'esatta terminologia usata nella JD (es: se chiedono "Cloud Native", non scrivere solo "Cloud").
+    5. NO INVENZIONI: Non aggiungere mai esperienze che l'utente non ha. Enfatizza solo quelle esistenti.
+    6. FORMATO: Restituisci un JSON puro che mappa esattamente le sezioni fornite.`;
 
     const userPrompt = `
     JOB DESCRIPTION:
