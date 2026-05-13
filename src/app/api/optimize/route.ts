@@ -18,46 +18,48 @@ export async function POST(req: Request) {
       originalDescription: exp.description,
     }));
 
-    const systemPrompt = `ORDINE ASSOLUTO: SCRIVI TUTTO IN LINGUA ${targetLanguage.toUpperCase()}.
+    const systemPrompt = `MANDATO LINGUISTICO SUPREMO: DEVI SCRIVERE TUTTO ESCLUSIVAMENTE IN LINGUA ${targetLanguage.toUpperCase()}.
+NON IMPORTA in che lingua sia scritto l'annuncio di lavoro o i dati originali: la lingua finale deve essere SOLO ${targetLanguage.toUpperCase()}.
 
-Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}".
+Sei un Senior Executive Recruiter esperto in ottimizzazione ATS. Ottimizza il CV per "${jobTitle}".
 
-LOGICA REBRANDING TITOLI (LA TUA MISSIONE):
-1. TRADUZIONE DAL "LINGUAGGIO INTERNO": I titoli aziendali dell'utente (es. "Digital Application Professional") sono inutili all'esterno. TRADUCILI in termini standard di mercato (es. "Technical Solutions Lead", "IT Systems Architect", "Application Manager").
-2. EVITA IL CLONING: NON copiare mai al 100% il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi prestigiosi o ruoli correlati.
-3. ESEMPIO DI SUCCESSO: Se l'annuncio cerca un "Technical Project Manager", trasforma il ruolo dell'utente in "Technical Implementation Lead" o "Digital Transformation Coordinator" se la descrizione lo giustifica.
-4. COERENZA: Il nuovo titolo deve riflettere le responsabilità reali descritte.
+LOGICA REBRANDING TITOLI (MERCATO INTERNAZIONALE):
+1. TRADUZIONE STANDARD: Traduci i titoli interni criptici in ruoli standard di mercato riconosciuti.
+2. DIVIETO CLONING: È VIETATO copiare esattamente il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi professionali.
+3. COERENZA: Il nuovo titolo deve riflettere le responsabilità reali in lingua ${targetLanguage.toUpperCase()}.
 
-REGOLE COMPETENZE E GENERALI:
-- LIVELLI REALISTICI (Mix di Intermediate, Advanced, Expert).
-- Includi "AI-Assisted Development / Vibe-Coding" se l'utente usa strumenti moderni.
+REGOLE CONTENUTO:
+- LIVELLI SKILL REALISTICI (Mix di Intermediate, Advanced, Expert).
+- Includi sempre "AI-Assisted Development / Vibe-Coding".
 - NO CERTIFICAZIONI FALSE.
-- RISPONDI SOLO CON UN OGGETTO JSON RISPETTANDO LA STRUTTURA RICHIESTA.`;
+
+IMPORTANTE: Ogni campo di testo restituito nel JSON deve essere rigorosamente in ${targetLanguage.toUpperCase()}.`;
 
     const userPrompt = `
-    LINGUA: ${targetLanguage.toUpperCase()}
+    LINGUA RICHIESTA: ${targetLanguage.toUpperCase()} (Ignora ogni altra lingua presente)
     Job Target: ${jobTitle}
-    Dati Base: ${JSON.stringify(baseData)}
-    Esperienze: ${JSON.stringify(experienceWithIndex)}
+    Job Description (per contesto): ${jobDescription}
+    Dati Base CV: ${JSON.stringify(baseData)}
+    Esperienze da ottimizzare: ${JSON.stringify(experienceWithIndex)}
     
-    STRUTTURA JSON OBBLIGATORIA DA RESTITUIRE:
+    STRUTTURA JSON OBBLIGATORIA (TUTTI I CAMPI IN ${targetLanguage.toUpperCase()}):
     {
       "personalInfo": { 
-        "summary": "Sommario riscritto e ottimizzato", 
-        "originalSummary": "Copia del summary originale", 
-        "changeReason": "Perché lo hai cambiato" 
+        "summary": "Sommario ottimizzato", 
+        "originalSummary": "...", 
+        "changeReason": "..." 
       },
       "experience": [
         { 
           "index": 0, 
-          "newPosition": "TITOLO DI MERCATO (Non clonare il target, non usare l'originale se criptico)", 
-          "originalPosition": "Copia originale", 
-          "newDescription": "Descrizione riscritta", 
-          "originalDescription": "Copia originale", 
-          "changeReason": "Spiega la traduzione del titolo" 
+          "newPosition": "Titolo Standard di Mercato (NO CLONE)", 
+          "originalPosition": "...", 
+          "newDescription": "Descrizione ottimizzata", 
+          "originalDescription": "...", 
+          "changeReason": "..." 
         }
       ],
-      "skills": [ { "name": "Nome Skill", "level": "Livello (Beginner/Intermediate/Advanced/Expert)" } ],
+      "skills": [ { "name": "Skill", "level": "Level" } ],
       "atsScore": 85
     }`;
 
@@ -74,7 +76,7 @@ REGOLE COMPETENZE E GENERALI:
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3, 
+        temperature: 0.2, // Ridotta per massima aderenza alle istruzioni linguistiche
       }),
     });
 
@@ -87,12 +89,10 @@ REGOLE COMPETENZE E GENERALI:
     const optimizedContent = JSON.parse(rawContent);
 
     const mergedExperience = baseData.experience.map((exp: any, i: number) => {
-      // Troviamo l'esperienza corrispondente tramite l'indice per massima sicurezza
       const opt = optimizedContent.experience?.find((e: any) => e.index === i) || optimizedContent.experience?.[i];
       if (opt) {
         return {
           ...exp,
-          // Assicuriamoci che newPosition esista, altrimenti usiamo l'originale
           position: opt.newPosition || exp.position,
           description: opt.newDescription || exp.description,
           _metadata: {
@@ -121,7 +121,7 @@ REGOLE COMPETENZE E GENERALI:
     });
 
   } catch (error) {
-    console.error("Critical Optimization Error:", error);
-    return NextResponse.json({ message: "Errore durante l'ottimizzazione." }, { status: 500 });
+    console.error("Optimization Error:", error);
+    return NextResponse.json({ message: "Errore durante l'ottimizzazione linguistica." }, { status: 500 });
   }
 }
