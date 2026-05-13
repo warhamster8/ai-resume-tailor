@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import pdf from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -27,8 +27,9 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Extract text from PDF
-    const pdfData = await pdf(buffer);
+    // Extract text from PDF using modern PDFParse (v2+)
+    const parser = new PDFParse({ data: buffer });
+    const pdfData = await parser.getText();
     const extractedText = pdfData.text;
 
     const systemPrompt = `Sei un esperto di analisi documenti. 
