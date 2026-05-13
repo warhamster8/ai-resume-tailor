@@ -134,6 +134,21 @@ export async function POST(req: Request) {
     const content = data.choices[0].message.content;
     const parsedResume = JSON.parse(content);
 
+    // Assegna ID se mancanti per permettere l'ottimizzazione mirata
+    if (parsedResume.experience) {
+      parsedResume.experience = parsedResume.experience.map((exp: any, index: number) => ({
+        ...exp,
+        id: exp.id || `exp_${index + 1}`
+      }));
+    }
+    
+    if (parsedResume.education) {
+      parsedResume.education = parsedResume.education.map((edu: any, index: number) => ({
+        ...edu,
+        id: edu.id || `edu_${index + 1}`
+      }));
+    }
+
     return NextResponse.json(parsedResume);
   } catch (error: any) {
     console.error("Global Parsing Error:", error);

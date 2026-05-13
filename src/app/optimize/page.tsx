@@ -9,6 +9,7 @@ import ResumePreview from '@/components/pdf/ResumePreview';
 export default function OptimizePage() {
   const [baseCV, setBaseCV] = useState<ResumeData | null>(null);
   const [jobTitle, setJobTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedData, setOptimizedData] = useState<OptimizedResumeData | null>(null);
@@ -39,8 +40,8 @@ export default function OptimizePage() {
   }, []);
 
   const handleOptimize = async () => {
-    if (!baseCV || !jobTitle || !jobDescription) {
-      setError('Inserisci il Job Title e la Job Description per continuare.');
+    if (!baseCV || !jobTitle || !companyName || !jobDescription) {
+      setError('Inserisci il Ruolo, l\'Azienda e la Job Description per continuare.');
       return;
     }
 
@@ -63,13 +64,13 @@ export default function OptimizePage() {
       const data = await response.json();
       setOptimizedData(data);
       
-      // Salvataggio automatico nella cronologia
+      // Salvataggio automatico nella cronologia con l'azienda corretta
       const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('cv_history').insert({
         user_id: user?.id,
         base_cv_data: baseCV,
         optimized_cv_data: data,
-        target_company: 'Da LinkedIn',
+        target_company: companyName, // Salviamo il nome dell'azienda reale
         target_position: jobTitle,
         is_base: false
       });
@@ -98,28 +99,42 @@ export default function OptimizePage() {
     <div className="max-w-4xl mx-auto py-10 px-4 space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Ottimizza il tuo CV</h1>
-        <p className="text-secondary mt-2">Incolla i dettagli dell'offerta di lavoro per "indorare la pillola" in modo strategico.</p>
+        <p className="text-secondary mt-2">Personalizza il tuo CV per una specifica azienda e posizione.</p>
       </div>
 
       <div className="crisp-card p-6 space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-bold flex items-center gap-2">
-            <Wand2 className="w-4 h-4 text-accent" /> Job Title dell'annuncio
-          </label>
-          <input
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            className="w-full p-3 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent"
-            placeholder="E.g. Senior Project Manager, Sviluppatore React..."
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-bold flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-accent" /> Ruolo Target
+            </label>
+            <input
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              className="w-full p-3 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent"
+              placeholder="E.g. Senior Project Manager..."
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-accent" /> Azienda
+            </label>
+            <input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="w-full p-3 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent"
+              placeholder="E.g. Ferrari, Google, Amazon..."
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-bold">Job Description (Copia da LinkedIn)</label>
+          <label className="text-sm font-bold text-secondary">Job Description (Copia da LinkedIn)</label>
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            rows={10}
+            rows={8}
             className="w-full p-4 border border-border rounded-xl bg-background outline-none focus:ring-2 focus:ring-accent resize-none text-sm leading-relaxed"
             placeholder="Incolla qui l'intera descrizione della posizione..."
           />
