@@ -14,7 +14,15 @@ const PDFDownloadButton = dynamic(() => import('@/components/pdf/PDFDownloadButt
 });
 
 export default function OptimizePage() {
-  return <OptimizePageContent />;
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <OptimizePageContent />
+    </Suspense>
+  );
 }
 
 function OptimizePageContent() {
