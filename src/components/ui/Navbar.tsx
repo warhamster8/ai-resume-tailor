@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FileText, LayoutDashboard, User, LogOut } from 'lucide-react';
+import { FileText, LayoutDashboard, User, LogOut, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -45,7 +45,11 @@ export default function Navbar() {
                 </Link>
                 <Link href="/editor" className="text-sm font-medium hover:text-accent transition-colors flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  Nuovo CV
+                  CV Base
+                </Link>
+                <Link href="/optimize" className="text-sm font-medium hover:text-accent transition-colors flex items-center gap-2">
+                  <Wand2 className="w-4 h-4" />
+                  Ottimizza
                 </Link>
                 <Link href="/profile" className="text-sm font-medium hover:text-accent transition-colors flex items-center gap-2">
                   <User className="w-4 h-4" />

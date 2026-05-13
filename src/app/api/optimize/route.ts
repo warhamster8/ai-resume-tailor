@@ -13,24 +13,24 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { baseData, jobDescription } = await req.json();
+    const { baseData, jobTitle, jobDescription } = await req.json();
 
-    const systemPrompt = `Sei un esperto Senior HR e specialista certificato in sistemi ATS (Applicant Tracking System). 
-    Il tuo obiettivo è riscrivere le sezioni del CV dell'utente per massimizzare la compatibilità con una specifica Job Description (JD).
-
-    LINEE GUIDA CRITICHE PER L'OTTIMIZZAZIONE:
-    1. KEYWORDS: Identifica le "hard skills" e le parole chiave tecniche nella JD e integrane il maggior numero possibile nel CV in modo naturale.
-    2. VERBI D'AZIONE: Inizia ogni punto dell'esperienza lavorativa con verbi d'azione forti (es: Implementato, Guidato, Massimizzato, Progettato).
-    3. TENSIONE AI RISULTATI: Trasforma compiti generici in risultati misurabili dove possibile.
-    4. TERMINOLOGIA: Usa l'esatta terminologia usata nella JD (es: se chiedono "Cloud Native", non scrivere solo "Cloud").
-    5. NO INVENZIONI: Non aggiungere mai esperienze che l'utente non ha. Enfatizza solo quelle esistenti.
-    6. FORMATO: Restituisci un JSON puro che mappa esattamente le sezioni fornite.`;
+    const systemPrompt = `Sei un Senior Tech Recruiter con oltre 15 anni di esperienza nel settore HR e un solido background tecnico. 
+    Il tuo compito è il "Reframing Strategico" del CV per un ruolo specifico.
+    
+    LA TUA MISSIONE:
+    - Agire come un ponte tra il candidato e il dipartimento tecnico dell'azienda.
+    - "Indora la pillola": Riformula le esperienze reali dell'utente usando la terminologia tecnica più prestigiosa e attuale, senza mai inventare fatti.
+    - ATS & HUMAN: Ottimizza per i software di screening ma mantieni un tono che impressioni un responsabile tecnico umano.
+    - COERENZA: Assicurati che ogni modifica sia tecnicamente sensata e coerente con il Job Title target.`;
 
     const userPrompt = `
-    JOB DESCRIPTION:
+    TARGET JOB TITLE: ${jobTitle}
+    
+    LINKEDIN JOB DESCRIPTION:
     ${jobDescription}
 
-    CV BASE (JSON):
+    USER BASE CV (JSON):
     ${JSON.stringify(baseData)}
 
     STRUTTURA JSON RICHIESTA:
