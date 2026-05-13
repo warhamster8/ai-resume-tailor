@@ -33,14 +33,13 @@ export async function POST(req: Request) {
     try {
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
       
-      // Set worker source to CDN to avoid "Cannot find module" errors on Vercel
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.mjs`;
-      
+      // Disable worker to avoid protocol/file issues on Vercel
       const loadingTask = pdfjs.getDocument({
         data: buffer,
         useWorkerFetch: false,
         isEvalSupported: false,
-        useSystemFonts: true
+        useSystemFonts: true,
+        disableWorker: true // Force parsing in the main thread
       });
       
       const pdf = await loadingTask.promise;
