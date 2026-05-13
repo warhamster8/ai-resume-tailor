@@ -20,33 +20,28 @@ export async function POST(req: Request) {
 
     const systemPrompt = `ORDINE ASSOLUTO: DEVI SCRIVERE TUTTO IL CV IN LINGUA ${targetLanguage.toUpperCase()}.
 
-Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}".
+Sei un Senior Executive Recruiter. Ottimizza il CV per la posizione di "${jobTitle}".
 
-REGOLE IMPERATIVE:
-1. LINGUA: Ogni singola parola del JSON (summary, position, description, skills) DEVE essere in ${targetLanguage.toUpperCase()}. È vietato usare l'inglese se la lingua scelta è ITALIANO, anche se la Job Description è in inglese.
-2. NO CERTIFICAZIONI FALSE: Non inventare PMP, Scrum, ecc.
-3. DEDUZIONE SKILLS: Aggiungi skill realistiche e LIVELLI BILANCIATI (non tutti Expert).
-4. VIBE-CODING: Includi sempre una skill legata all'uso dell'IA/Vibe-coding se pertinente.
-5. REBRANDING TITOLI: Usa la descrizione per decidere il Job Title, ma non copiare pedissequamente il ruolo target.
+REGOLE DI REBRANDING TITOLI (ORDINE TASSATIVO):
+- È VIETATO usare il titolo esatto dell'annuncio ("${jobTitle}") nelle tue esperienze passate. Creerebbe sospetto immediato nel recruiter.
+- Crea dei "Titoli Ponte": usa varianti professionali e prestigiose che dimostrino che sei pronto per il ruolo target (es: se cerchi come PM, usa "Project Coordinator", "Lead Implementation Specialist", "Digital Transformation Lead").
+- Il titolo deve essere una conseguenza LOGICA della descrizione dell'esperienza.
 
-RISPONDI SOLO CON UN OGGETTO JSON.`;
+REGOLE COMPETENZE (SKILLS):
+- LIVELLI REALISTICI: NON mettere tutto come "Expert". Usa un mix (Intermediate, Advanced, Expert).
+- AI & VIBE-CODING: Includi sempre la capacità di usare l'IA/Vibe-coding per l'efficienza.
+- Ordina le skill per pertinenza rispetto alla Job Description.
+
+REGOLE GENERALI:
+- NO CERTIFICAZIONI FALSE (PMP, Scrum, ecc.).
+- LINGUA: Tutto esclusivamente in ${targetLanguage.toUpperCase()}.
+- RISPONDI SOLO CON JSON.`;
 
     const userPrompt = `
-    LINGUA OBBLIGATORIA PER QUESTA RISPOSTA: ${targetLanguage.toUpperCase()}
-    
-    Dati base: ${JSON.stringify(baseData)}
-    Esperienze: ${JSON.stringify(experienceWithIndex)}
-    Job Description Target: ${jobDescription}
-    
-    Struttura richiesta (compila tutto in ${targetLanguage.toUpperCase()}):
-    {
-      "personalInfo": { "summary": "...", "originalSummary": "...", "changeReason": "..." },
-      "experience": [
-        { "index": 0, "newPosition": "...", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
-      ],
-      "skills": [ { "name": "...", "level": "..." } ],
-      "atsScore": 95
-    }`;
+    LINGUA: ${targetLanguage.toUpperCase()}
+    Job Post: ${jobTitle}
+    Dati: ${JSON.stringify(baseData)}
+    Esperienze: ${JSON.stringify(experienceWithIndex)}`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -61,7 +56,7 @@ RISPONDI SOLO CON UN OGGETTO JSON.`;
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.2, // Ulteriore riduzione per massima obbedienza
+        temperature: 0.2,
       }),
     });
 
