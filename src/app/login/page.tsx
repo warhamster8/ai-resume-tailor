@@ -17,8 +17,8 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Whitelist check (client-side for UX, but should be enforced server-side/middleware)
-    const allowedEmails = ['andrea@example.com', 'moglie@example.com']; // SOSTITUISCI CON LE TUE EMAIL
+    // Whitelist check
+    const allowedEmails = ['grosso.andrea@gmail.com']; 
     if (!allowedEmails.includes(email.toLowerCase())) {
       setError('Accesso non autorizzato. Questa è una workstation privata.');
       setLoading(false);
