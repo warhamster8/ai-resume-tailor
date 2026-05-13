@@ -129,116 +129,82 @@ export default function OptimizePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-12">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
-        
-        {/* Sinistra: Form Input */}
-        <div className="space-y-8">
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-            <h1 className="text-3xl font-bold text-slate-900 mb-6">Target Positioning</h1>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Azienda</label>
-                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="es. Google, Ferrari" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Ruolo Target</label>
-                  <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="es. Senior Project Manager" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 transition-all outline-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Lingua di Output</label>
-                <div className="flex gap-4">
-                  <button onClick={() => setLanguage('it')} className={`flex-1 py-3 rounded-xl border transition-all ${language === 'it' ? 'bg-blue-50 border-blue-500 text-blue-700 font-bold' : 'bg-white border-slate-200 text-slate-600'}`}>Italiano 🇮🇹</button>
-                  <button onClick={() => setLanguage('en')} className={`flex-1 py-3 rounded-xl border transition-all ${language === 'en' ? 'bg-blue-50 border-blue-500 text-blue-700 font-bold' : 'bg-white border-slate-200 text-slate-600'}`}>English 🇬🇧</button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Job Description (copia e incolla)</label>
-                <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={8} className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm" placeholder="Incolla qui il testo dell'annuncio di lavoro per permettere all'IA di analizzarlo..." />
-              </div>
-
-              <button onClick={handleOptimize} disabled={isOptimizing} className={`w-full py-4 rounded-xl font-bold text-white transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 ${isOptimizing ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg shadow-blue-200'}`}>
-                {isOptimizing ? (
-                  <><span className="animate-spin text-xl">⏳</span> Analisi e Ottimizzazione in corso...</>
-                ) : (
-                  <>🚀 Ottimizza CV per questa posizione</>
-                )}
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Header compatto */}
+      <div className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.push('/dashboard')} className="text-slate-500 hover:text-slate-900 transition-colors">← Dashboard</button>
+          <h1 className="text-xl font-bold text-slate-900">Ottimizzazione Resume</h1>
         </div>
+        <div className="flex gap-3">
+          {optimizedData && (
+             <button onClick={() => window.print()} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold">Scarica PDF</button>
+          )}
+        </div>
+      </div>
 
-        {/* Destra: Preview o Raffinamento */}
-        <div className="relative">
-          {optimizedData ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-bold text-slate-800">Preview Ottimizzata</h2>
-                <div className="flex gap-2">
-                  <button onClick={() => setOptimizedData(null)} className="text-sm text-slate-500 hover:text-red-500">Cancella</button>
-                </div>
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-65px)]">
+        
+        {/* Colonna Sinistra: Controlli (Fissa) */}
+        <div className="w-full lg:w-[450px] bg-white border-r border-slate-200 overflow-y-auto p-8 space-y-8">
+          <section>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Target Job</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Azienda</label>
+                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="es. Google" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
               </div>
-              
-              <ResumePreview data={optimizedData} />
-
-              {/* BARRA COMANDI DI RAFFINAMENTO */}
-              <div className="bg-white p-6 rounded-2xl shadow-md border border-blue-100 mt-6">
-                <h3 className="text-sm font-bold text-blue-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  ✨ Comandi di Raffinamento IA
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => handleRefine("Voglio altre 3 varianti diverse per i Job Title, mantieni lo standard di mercato ma non clonare l'annuncio.")}
-                    disabled={refinementLoading}
-                    className="py-2 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
-                  >
-                    🔄 Varia Job Titles
-                  </button>
-                  <button 
-                    onClick={() => handleRefine("Riscrivi il Sommario (Professional Summary) rendendolo più incisivo e orientato ai risultati.")}
-                    disabled={refinementLoading}
-                    className="py-2 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
-                  >
-                    ✍️ Riscrivi Profilo
-                  </button>
-                  <button 
-                    onClick={() => handleRefine("Punta molto di più sulle mie competenze AI, Vibe-coding e digital transformation nelle descrizioni delle esperienze.")}
-                    disabled={refinementLoading}
-                    className="py-2 px-4 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium hover:bg-blue-50 hover:border-blue-300 transition-all flex items-center gap-2"
-                  >
-                    🤖 Più Focus AI
-                  </button>
-                  <button 
-                    onClick={() => {
-                      const req = prompt("Cosa vuoi cambiare in questo CV?");
-                      if(req) handleRefine(req);
-                    }}
-                    disabled={refinementLoading}
-                    className="py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all flex items-center gap-2"
-                  >
-                    💬 Altra Modifica...
-                  </button>
-                </div>
-                {refinementLoading && (
-                  <div className="mt-4 text-center text-sm text-blue-600 animate-pulse font-medium">
-                    L'IA sta rielaborando il CV secondo le tue istruzioni...
-                  </div>
-                )}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Ruolo Target</label>
+                <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="es. Project Manager" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
               </div>
             </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-3xl border-2 border-dashed border-slate-200 opacity-60">
-              <div className="text-6xl mb-6">📄</div>
-              <h2 className="text-2xl font-bold text-slate-400">Pronto per l'Analisi</h2>
-              <p className="text-slate-400 mt-2 max-w-xs">Configura il target a sinistra per vedere la magia dell'ottimizzazione.</p>
+          </section>
+
+          <section>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Configurazione</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setLanguage('it')} className={`flex-1 py-2 rounded-lg text-sm transition-all ${language === 'it' ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 text-slate-600'}`}>Italiano 🇮🇹</button>
+              <button onClick={() => setLanguage('en')} className={`flex-1 py-2 rounded-lg text-sm transition-all ${language === 'en' ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 text-slate-600'}`}>English 🇬🇧</button>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Job Description</h2>
+            <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={6} className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs" placeholder="Incolla l'annuncio..." />
+          </section>
+
+          <button onClick={handleOptimize} disabled={isOptimizing} className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all ${isOptimizing ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
+            {isOptimizing ? "Ottimizzazione..." : "🚀 Genera Ottimizzazione"}
+          </button>
+
+          {optimizedData && (
+            <div className="pt-8 border-t border-slate-100">
+              <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">✨ Raffinamento IA</h3>
+              <div className="grid grid-cols-1 gap-2">
+                <button onClick={() => handleRefine("Voglia altre 3 varianti per i Job Title.")} className="text-left py-2.5 px-4 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all">🔄 Varia Job Titles</button>
+                <button onClick={() => handleRefine("Riscrivi il profilo rendendolo più incisivo.")} className="text-left py-2.5 px-4 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all">✍️ Riscrivi Profilo</button>
+                <button onClick={() => handleRefine("Focus su Vibe-coding e AI.")} className="text-left py-2.5 px-4 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 transition-all">🤖 Più Focus AI</button>
+                <button onClick={() => { const r = prompt("Cosa vuoi cambiare?"); if(r) handleRefine(r); }} className="text-left py-2.5 px-4 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-all">💬 Altro comando...</button>
+              </div>
             </div>
           )}
         </div>
+
+        {/* Colonna Destra: Preview (Ampia) */}
+        <div className="flex-1 bg-slate-200 overflow-y-auto p-4 md:p-12 flex justify-center items-start">
+          {optimizedData ? (
+            <div className="w-full max-w-4xl shadow-2xl rounded-lg overflow-hidden">
+               <ResumePreview data={optimizedData} />
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400">
+              <span className="text-6xl mb-4 opacity-20">📄</span>
+              <p className="font-medium">L'anteprima del CV apparirà qui</p>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
