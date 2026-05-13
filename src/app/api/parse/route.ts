@@ -34,7 +34,10 @@ export async function POST(req: Request) {
     // Extract text from PDF - dynamic import avoids the pdf-parse ENOENT bug
     let extractedText = "";
     try {
-      const pdfParse = (await import("pdf-parse")).default;
+      const pdfImport = await import("pdf-parse");
+      // Handle both default and named imports for maximum compatibility
+      const pdfParse = pdfImport.default || pdfImport;
+      
       const pdfData = await pdfParse(buffer);
       extractedText = pdfData.text;
 
@@ -44,10 +47,13 @@ export async function POST(req: Request) {
           { status: 422 }
         );
       }
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("PDF Parsing Error:", parseError);
       return NextResponse.json(
-        { message: "Errore durante la lettura del PDF. Assicurati che il file non sia corrotto." },
+        { 
+          message: "Errore durante la lettura del PDF.", 
+          details: parseError.message || String(parseError)
+        },
         { status: 500 }
       );
     }
