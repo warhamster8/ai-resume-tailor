@@ -18,37 +18,33 @@ export async function POST(req: Request) {
       originalDescription: exp.description,
     }));
 
-    const systemPrompt = `Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}" in lingua ${targetLanguage}.
+    const systemPrompt = `ORDINE ASSOLUTO: DEVI SCRIVERE TUTTO IL CV IN LINGUA ${targetLanguage.toUpperCase()}.
 
-REGOLE DI REBRANDING TITOLI (CRITICO):
-- NON usare il Job Title target ("${jobTitle}") in modo identico nelle tue esperienze passate se non è vero. È sospetto e poco credibile.
-- Usa titoli che siano "ponti" verso il ruolo target. Esempio: Se punta a "Project Manager", usa "Lead Implementation Specialist" o "Operations Coordinator" per le esperienze passate, non "Project Manager" ovunque.
-- Il rebranding deve essere sottile e basato sui fatti reali della descrizione.
+Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}".
 
-REGOLE COMPETENZE (SKILLS):
-- Riscrivi e riorganizza la lista delle competenze.
-- LIVELLI REALISTICI: NON mettere tutto come "Expert". Usa un mix bilanciato (Intermediate, Advanced, Expert). Sii onesto e credibile.
-- AGGIUNGI SEMPRE (se pertinente): "AI-Assisted Development" o "Vibe-Coding / Prompt Engineering" come competenza, riflettendo la capacità dell'utente di usare l'IA per velocizzare i processi.
-- Dai priorità alle skill più rilevanti per la Job Description fornita.
-- Deduci skill realistiche (es. se usa Teamcenter, deduci "PLM Management").
+REGOLE IMPERATIVE:
+1. LINGUA: Ogni singola parola del JSON (summary, position, description, skills) DEVE essere in ${targetLanguage.toUpperCase()}. È vietato usare l'inglese se la lingua scelta è ITALIANO, anche se la Job Description è in inglese.
+2. NO CERTIFICAZIONI FALSE: Non inventare PMP, Scrum, ecc.
+3. DEDUZIONE SKILLS: Aggiungi skill realistiche e LIVELLI BILANCIATI (non tutti Expert).
+4. VIBE-CODING: Includi sempre una skill legata all'uso dell'IA/Vibe-coding se pertinente.
+5. REBRANDING TITOLI: Usa la descrizione per decidere il Job Title, ma non copiare pedissequamente il ruolo target.
 
-REGOLE GENERALI:
-- NO CERTIFICAZIONI FALSE.
-- LINGUA: Tutto in ${targetLanguage}.
-- RISPONDI SOLO CON JSON.`;
+RISPONDI SOLO CON UN OGGETTO JSON.`;
 
     const userPrompt = `
+    LINGUA OBBLIGATORIA PER QUESTA RISPOSTA: ${targetLanguage.toUpperCase()}
+    
     Dati base: ${JSON.stringify(baseData)}
     Esperienze: ${JSON.stringify(experienceWithIndex)}
-    Job Description: ${jobDescription}
+    Job Description Target: ${jobDescription}
     
-    Struttura:
+    Struttura richiesta (compila tutto in ${targetLanguage.toUpperCase()}):
     {
       "personalInfo": { "summary": "...", "originalSummary": "...", "changeReason": "..." },
       "experience": [
-        { "index": 0, "newPosition": "Titolo credibile e non forzato", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
+        { "index": 0, "newPosition": "...", "originalPosition": "...", "newDescription": "...", "originalDescription": "...", "changeReason": "..." }
       ],
-      "skills": [ { "name": "Skill ottimizzata", "level": "Livello" } ],
+      "skills": [ { "name": "...", "level": "..." } ],
       "atsScore": 95
     }`;
 
@@ -65,7 +61,7 @@ REGOLE GENERALI:
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.25,
+        temperature: 0.2, // Ulteriore riduzione per massima obbedienza
       }),
     });
 
@@ -111,6 +107,6 @@ REGOLE GENERALI:
 
   } catch (error) {
     console.error("Optimization Error:", error);
-    return NextResponse.json({ message: "Errore IA" }, { status: 500 });
+    return NextResponse.json({ message: "Errore durante l'ottimizzazione." }, { status: 500 });
   }
 }
