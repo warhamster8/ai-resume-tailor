@@ -31,8 +31,10 @@ export async function POST(req: Request) {
 
     let extractedText = "";
     try {
-      // Use pdfjs-dist directly (the most robust way on Vercel)
       const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      
+      // Set worker source to CDN to avoid "Cannot find module" errors on Vercel
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.mjs`;
       
       const loadingTask = pdfjs.getDocument({
         data: buffer,
