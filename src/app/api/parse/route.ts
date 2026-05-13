@@ -31,31 +31,10 @@ export async function POST(req: Request) {
 
     let extractedText = "";
     try {
-      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-      
-      // Disable worker to avoid protocol/file issues on Vercel
-      const loadingTask = pdfjs.getDocument({
-        data: buffer,
-        useWorkerFetch: false,
-        isEvalSupported: false,
-        useSystemFonts: true,
-        disableWorker: true,
-        verbosity: 0
-      } as any);
-      
-      const pdf = await loadingTask.promise;
-      let fullText = "";
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        fullText += pageText + "\n";
-      }
-      
-      extractedText = fullText;
+      const { getDocumentProxy, extractText } = await import("unpdf");
+      const pdf = await getDocumentProxy(buffer);
+      const { text } = await extractText(pdf, { mergePages: true });
+      extractedText = text;
 
       if (!extractedText || extractedText.trim().length === 0) {
         return NextResponse.json(
