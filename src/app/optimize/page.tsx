@@ -61,24 +61,37 @@ export default function OptimizePage() {
         }),
       });
 
-      if (!response.ok) throw new Error('Errore durante l\'ottimizzazione');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Errore durante l\'ottimizzazione');
+      }
 
       const data = await response.json();
-      setOptimizedData(data);
       
-      // Salvataggio automatico nella cronologia con l'azienda corretta
+      // Salvataggio automatico nella cronologia
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('cv_history').insert({
-        user_id: user?.id,
-        base_cv_data: baseCV,
-        optimized_cv_data: data,
-        target_company: companyName, // Salviamo il nome dell'azienda reale
-        target_position: jobTitle,
-        is_base: false
-      });
+      if (user) {
+        const { error: saveError } = await supabase.from('cv_history').insert({
+          user_id: user.id,
+          base_cv_data: baseCV,
+          optimized_cv_data: data,
+          target_company: companyName,
+          target_position: jobTitle,
+          is_base: false
+        });
 
-    } catch (err) {
-      setError('Si è verificato un errore con l\'IA. Riprova tra poco.');
+        if (saveError) {
+          console.error('Errore salvataggio DB:', saveError);
+          // Non blocchiamo la preview se il salvataggio fallisce, ma avvisiamo
+          alert('Attenzione: Il CV è stato generato ma non è stato possibile salvarlo nella cronologia.');
+        }
+      }
+
+      setOptimizedData(data);
+
+    } catch (err: any) {
+      console.error('Optimization error:', err);
+      setError(err.message || 'Si è verificato un errore con l\'IA. Riprova tra poco.');
     } finally {
       setIsOptimizing(false);
     }
