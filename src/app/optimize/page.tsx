@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ResumeData, OptimizedResumeData } from '@/types/resume';
-import { Loader2, Wand2, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Wand2, FileText, CheckCircle2, AlertCircle, Building2 } from 'lucide-react';
 import ResumePreview from '@/components/pdf/ResumePreview';
 
 export default function OptimizePage() {
