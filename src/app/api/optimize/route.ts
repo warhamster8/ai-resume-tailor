@@ -18,29 +18,34 @@ export async function POST(req: Request) {
       originalDescription: exp.description,
     }));
 
-    const systemPrompt = `ORDINE ASSOLUTO: SCRIVI TUTTO IN LINGUA ${targetLanguage.toUpperCase()}.
+    const systemPrompt = `ORDINE SUPREMO: SCRIVI TUTTO IN LINGUA ${targetLanguage.toUpperCase()}.
 
-Sei un Senior Executive Recruiter. Ottimizza il CV per "${jobTitle}".
+Sei un Senior Recruiter. Il tuo obiettivo è TRADURRE i titoli interni in TITOLI DI MERCATO STANDARD.
 
-LOGICA REBRANDING TITOLI (LA TUA MISSIONE):
-1. TRADUZIONE DAL "LINGUAGGIO INTERNO": I titoli aziendali dell'utente (es. "Digital Application Professional") sono inutili all'esterno. TRADUCILI in termini standard di mercato (es. "Technical Solutions Lead", "IT Systems Architect", "Application Manager").
-2. EVITA IL CLONING: NON copiare mai al 100% il titolo dell'annuncio ("${jobTitle}"). Usa sinonimi prestigiosi o ruoli correlati.
-3. ESEMPIO DI SUCCESSO: Se l'annuncio cerca un "Technical Project Manager", trasforma il ruolo dell'utente in "Technical Implementation Lead" o "Digital Transformation Coordinator" se la descrizione lo giustifica.
-4. COERENZA: Il nuovo titolo deve riflettere le responsabilità reali descritte, ma con terminologia che un ATS o un recruiter esterno riconoscerebbero subito.
+REGOLA N.1 - DIVIETO TITOLI INTERNI:
+È SEVERAMENTE VIETATO usare i titoli originali se contengono termini come "Professional", "Specialist" o "Coordinator" in modo generico. 
+DEVI trasformarli in titoli che un recruiter cercherebbe su LinkedIn.
 
-REGOLE COMPETENZE:
-- LIVELLI REALISTICI (Mix di Intermediate, Advanced, Expert).
-- Includi "AI-Assisted Development / Vibe-Coding" se l'utente usa strumenti moderni.
+ESEMPI OBBLIGATORI DI REBRANDING:
+- "IT Digital Application Professional" -> "IT Project Manager" o "Digital Solutions Lead"
+- "IT PLM and Quality Specialist" -> "PLM Manager" o "Quality Assurance Lead"
+- "Diesel Studies and Workload Coordinator" -> "Engineering Operations Lead" o "Project Demand Planner"
+- Qualsiasi titolo "Professional" -> Deve diventare "Manager", "Lead", o "Specialist" (con area specifica).
 
-DIVIETI:
-- NO CERTIFICAZIONI FALSE.
-- NO TESTO EXTRA FUORI DAL JSON.`;
+REGOLA N.2 - LA DESCRIZIONE COMANDA:
+Leggi la descrizione per capire il vero livello. Se l'utente gestiva processi complessi e team, usa "Manager" o "Lead", anche se il titolo originale era "Specialist".
+
+REGOLA N.3 - NO CLONING:
+Non copiare esattamente "${jobTitle}", usa varianti (es. se l'annuncio è PM, usa "Project Lead").
+
+RISPONDI SOLO IN JSON.`;
 
     const userPrompt = `
     LINGUA: ${targetLanguage.toUpperCase()}
-    Dati Base: ${JSON.stringify(baseData)}
-    Esperienze: ${JSON.stringify(experienceWithIndex)}
-    Obiettivo: Ottimizzare per "${jobTitle}" senza clonare il titolo.`;
+    Ruolo cercato: ${jobTitle}
+    
+    TRASFORMA QUESTI TITOLI INTERNI IN TITOLI PRESTIGIOSI DI MERCATO:
+    ${JSON.stringify(experienceWithIndex, null, 2)}`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -55,7 +60,7 @@ DIVIETI:
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3, // Leggera flessibilità per trovare sinonimi migliori
+        temperature: 0.4, // Aumentata per favorire la "traduzione creativa" dei titoli
       }),
     });
 
