@@ -29,7 +29,10 @@ export default function ResumeHTMLPreview({ data, templateId }: Props) {
           {data.personalInfo?.fullName || 'Nome non disponibile'}
         </h1>
         <p className="text-sm tracking-[0.2em] text-gray-500 uppercase font-medium">
-          {data.personalInfo?.title || 'Professional'}
+          {data.personalInfo?.title || 
+           data.experience?.find(exp => exp.current)?.position || 
+           data.experience?.[0]?.position || 
+           'Professional'}
         </p>
         <div className="h-[2px] bg-[#1a1a1a] my-4" />
         <div className="flex flex-wrap gap-4 text-[11px] text-gray-600 font-medium">

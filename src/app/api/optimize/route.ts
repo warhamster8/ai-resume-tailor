@@ -33,7 +33,22 @@ async function callDeepSeekWithRetry(payload: any, retries = 2): Promise<any> {
   }
 }
 
+// Simple in-memory rate limiting (instance-wide)
+const lastRequestTime = new Map<string, number>();
+const COOLDOWN_MS = 2000; // 2 seconds between requests
+
 export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for") || "anonymous";
+  const now = Date.now();
+  const lastTime = lastRequestTime.get(ip) || 0;
+
+  if (now - lastTime < COOLDOWN_MS) {
+    return NextResponse.json(
+      { message: "Troppe richieste. Attendi qualche secondo." },
+      { status: 429 }
+    );
+  }
+  lastRequestTime.set(ip, now);
   if (!API_KEY) {
     return NextResponse.json({ message: "API Key DeepSeek non configurata" }, { status: 500 });
   }
@@ -125,8 +140,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Optimize Route Error:", error);
     return NextResponse.json({ 
-      message: "L'IA è temporaneamente sovraccarica o ha riscontrato un errore.",
-      details: error.message 
+      message: "L'IA è temporaneamente sovraccarica o ha riscontrato un errore."
     }, { status: 500 });
   }
 }

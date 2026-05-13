@@ -7,7 +7,22 @@ export async function GET() {
   return NextResponse.json({ message: "API Parse is alive and reachable" });
 }
 
+// Simple in-memory rate limiting (instance-wide)
+const lastRequestTime = new Map<string, number>();
+const COOLDOWN_MS = 5000; // 5 seconds for PDF parsing (heavier task)
+
 export async function POST(req: Request) {
+  const ip = req.headers.get("x-forwarded-for") || "anonymous";
+  const now = Date.now();
+  const lastTime = lastRequestTime.get(ip) || 0;
+
+  if (now - lastTime < COOLDOWN_MS) {
+    return NextResponse.json(
+      { message: "Troppe richieste. Attendi qualche secondo prima di caricare un altro PDF." },
+      { status: 429 }
+    );
+  }
+  lastRequestTime.set(ip, now);
   if (!API_KEY || API_KEY === "your_deepseek_api_key_here") {
     return NextResponse.json(
       { message: "API Key DeepSeek non configurata. Inserisci una chiave valida nelle impostazioni." },
@@ -22,6 +37,21 @@ export async function POST(req: Request) {
     if (!file) {
       return NextResponse.json(
         { message: "Nessun file caricato" },
+        { status: 400 }
+      );
+    }
+
+    // Security: Validate file type and size (max 5MB)
+    if (file.type !== "application/pdf") {
+      return NextResponse.json(
+        { message: "Formato file non valido. Carica solo file PDF." },
+        { status: 400 }
+      );
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json(
+        { message: "Il file è troppo grande. Limite massimo: 5MB." },
         { status: 400 }
       );
     }
@@ -46,8 +76,7 @@ export async function POST(req: Request) {
       console.error("PDF Parsing Error:", parseError);
       return NextResponse.json(
         { 
-          message: "Errore durante l'estrazione del testo dal PDF.", 
-          details: parseError.message || String(parseError)
+          message: "Errore durante l'estrazione del testo dal PDF. Assicurati che il file non sia protetto o danneggiato."
         },
         { status: 500 }
       );
@@ -154,8 +183,7 @@ export async function POST(req: Request) {
     console.error("Global Parsing Error:", error);
     return NextResponse.json(
       { 
-        message: "Errore imprevisto durante l'elaborazione del CV.",
-        details: error.message || String(error)
+        message: "Errore imprevisto durante l'elaborazione del CV."
       },
       { status: 500 }
     );

@@ -6,7 +6,7 @@ import { ResumeData, OptimizedResumeData } from '@/types/resume';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const ResumeHTMLPreview = dynamic(() => import('@/components/preview/ResumeHTMLPreview'), {
+const ResumePreview = dynamic(() => import('@/components/pdf/ResumePreview'), {
   ssr: false,
   loading: () => (
     <div className="flex h-64 items-center justify-center text-slate-400">
@@ -284,8 +284,8 @@ export default function OptimizePageContent() {
         {/* Colonna Destra: Preview */}
         <div className="flex-1 bg-slate-200 overflow-y-auto p-4 md:p-12 flex justify-center items-start">
           {optimizedData ? (
-            <div className="w-full max-w-4xl shadow-2xl rounded-lg overflow-hidden">
-               <ResumeHTMLPreview data={optimizedData} templateId={7} />
+            <div className="w-full max-w-5xl shadow-2xl rounded-lg overflow-hidden">
+               <ResumePreview data={optimizedData} />
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">

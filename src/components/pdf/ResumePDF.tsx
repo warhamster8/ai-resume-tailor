@@ -16,12 +16,17 @@ export default function ResumePDF({ data, templateId }: Props) {
   const isSlate = templateId === 6;
   const isElite = templateId === 7;
 
+  const derivedTitle = data.personalInfo?.title || 
+    data.experience?.find(exp => exp.current)?.position || 
+    data.experience?.[0]?.position || 
+    'Professional';
+
   const displayData = {
     ...data,
     personalInfo: {
       ...(data.personalInfo || {}),
       fullName: data.personalInfo?.fullName || '',
-      title: data.personalInfo?.title || '',
+      title: derivedTitle,
       summary: isOriginal 
         ? ((data.personalInfo as any)?._metadata?.original || data.personalInfo?.summary || '') 
         : (data.personalInfo?.summary || '')
@@ -84,7 +89,7 @@ export default function ResumePDF({ data, templateId }: Props) {
       <View style={styles.eliteContainer}>
         <View style={styles.eliteHeader} wrap={true}>
           <Text style={styles.eliteName}>{displayData.personalInfo.fullName}</Text>
-          <Text style={styles.eliteSubName}>{displayData.personalInfo.title || 'Technical Professional'}</Text>
+          <Text style={styles.eliteSubName}>{displayData.personalInfo.title}</Text>
         </View>
         <View style={styles.eliteLine} wrap={true} />
         <View style={styles.eliteContactRow} wrap={true}>
@@ -140,7 +145,8 @@ export default function ResumePDF({ data, templateId }: Props) {
     <Page size="A4" style={styles.pageBleed}>
       <View style={{ flexDirection: 'row', minHeight: '100%' }}>
         <View style={styles.sidebar}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 15 }} wrap={true}>{displayData.personalInfo.fullName}</Text>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 5 }} wrap={true}>{displayData.personalInfo.fullName}</Text>
+          <Text style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.7)', marginBottom: 15 }} wrap={true}>{displayData.personalInfo.title}</Text>
           <Text style={{ fontSize: 8.5, marginBottom: 5 }} wrap={true}>{displayData.personalInfo.email}</Text>
           <Text style={{ fontSize: 8.5, marginBottom: 25 }} wrap={true}>{displayData.personalInfo.phone}</Text>
           <Text style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: 10, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)', paddingBottom: 5 }} wrap={true}>Competenze</Text>
@@ -172,6 +178,7 @@ export default function ResumePDF({ data, templateId }: Props) {
       <View>
         <View style={styles.slateHeader} wrap={true}>
           <Text style={styles.slateName}>{displayData.personalInfo.fullName}</Text>
+          <Text style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.8)', marginTop: -5, marginBottom: 10 }}>{displayData.personalInfo.title}</Text>
           <View style={styles.slateContactRow}>
             <Text>{displayData.personalInfo.email}</Text>
             <Text>•</Text>

@@ -17,10 +17,22 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Whitelist check
-    const allowedEmails = ['grosso.andrea@gmail.com', 'baldi.marzia@gmail.com']; 
-    if (!allowedEmails.includes(email.toLowerCase())) {
-      setError('Accesso non autorizzato. Questa è una workstation privata.');
+    // Whitelist check via server-side API
+    try {
+      const checkRes = await fetch('/api/auth/whitelist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const { allowed } = await checkRes.json();
+      
+      if (!allowed) {
+        setError('Accesso non autorizzato. Questa è una workstation privata.');
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      setError('Errore di connessione durante la verifica dell\'accesso.');
       setLoading(false);
       return;
     }

@@ -44,6 +44,14 @@ export default function PersonalInfoSection({ register }: Props) {
           />
         </div>
         <div className="space-y-2">
+          <label className="text-sm font-medium">Job Title (es. Senior Developer)</label>
+          <input
+            {...register("personalInfo.title")}
+            className="w-full p-2 border border-border rounded-md bg-background focus:ring-2 focus:ring-accent outline-none"
+            placeholder="Senior Cybersecurity Specialist"
+          />
+        </div>
+        <div className="space-y-2">
           <label className="text-sm font-medium">LinkedIn</label>
           <input
             {...register("personalInfo.linkedin")}
