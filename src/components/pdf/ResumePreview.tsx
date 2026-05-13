@@ -78,7 +78,7 @@ export default function ResumePreview({ data }: Props) {
 
                 {/* SUGGERIMENTI ESPERIENZE - POSIZIONATI SOPRA */}
                 <div className="mt-40 space-y-24">
-                  {(data.experience || []).map((exp: any, i: number) => (
+                  {(Array.isArray(data.experience) ? data.experience : []).map((exp: any, i: number) => (
                     <div key={i} className="relative group pointer-events-auto cursor-help">
                        {exp.position !== exp._metadata?.originalPosition && (
                          <>

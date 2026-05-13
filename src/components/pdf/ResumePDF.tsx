@@ -26,13 +26,17 @@ export default function ResumePDF({ data, templateId }: Props) {
       location: data.personalInfo?.location || '',
       summary: isOriginal ? ((data.personalInfo as any)?._metadata?.original || data.personalInfo?.summary || '') : (data.personalInfo?.summary || '')
     },
-    experience: (data.experience || []).map((exp: any) => ({
+    experience: (Array.isArray(data.experience) ? data.experience : []).map((exp: any) => ({
       ...exp,
-      position: isOriginal ? (exp._metadata?.originalPosition || exp.position) : exp.position,
-      description: isOriginal ? (exp._metadata?.originalDescription || exp.description) : exp.description
+      position: (isOriginal ? (exp._metadata?.originalPosition || exp.position) : exp.position) || '',
+      description: (isOriginal ? (exp._metadata?.originalDescription || exp.description) : exp.description) || '',
+      company: exp.company || '',
+      startDate: exp.startDate || '',
+      endDate: exp.endDate || '',
+      current: exp.current || false
     })),
-    skills: data.skills || [],
-    education: data.education || []
+    skills: (Array.isArray(data.skills) ? data.skills : []).map((s: any) => ({ name: s?.name || '', level: s?.level || '' })),
+    education: (Array.isArray(data.education) ? data.education : []).map((edu: any) => ({ degree: edu?.degree || '', school: edu?.school || '' }))
   };
 
   const styles = StyleSheet.create({
@@ -117,7 +121,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           <View style={styles.eliteRightCol}>
             <Text style={styles.eliteSectionTitle} wrap={false}>Esperienza Lavorativa</Text>
             {(displayData.experience || []).map((exp: any, i: number) => (
-              <View key={i} style={styles.eliteExpItem} wrap={false}>
+              <View key={i} style={styles.eliteExpItem}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={styles.eliteExpPos}>{exp.position}</Text>
                   <Text style={{ fontSize: 8.5, color: '#999' }}>{exp.startDate} - {exp.current ? 'Presente' : exp.endDate}</Text>
@@ -150,7 +154,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           <Text style={styles.standardText} wrap={false}>{displayData.personalInfo.summary}</Text>
           <Text style={[styles.sectionTitle, { marginTop: 25 }]} wrap={false}>Esperienza</Text>
           {(displayData.experience || []).map((exp: any, i: number) => (
-            <View key={i} style={{ marginBottom: 20 }} wrap={false}>
+            <View key={i} style={{ marginBottom: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 10.5 }}>{exp.position}</Text>
                 <Text style={{ fontSize: 8.5, color: '#666' }}>{exp.startDate} - {exp.current ? 'Presente' : exp.endDate}</Text>
@@ -183,7 +187,7 @@ export default function ResumePDF({ data, templateId }: Props) {
           
           <Text style={styles.slateSectionTitle} wrap={false}>Esperienza Lavorativa</Text>
           {(displayData.experience || []).map((exp: any, i: number) => (
-            <View key={i} style={{ marginBottom: 20 }} wrap={false}>
+            <View key={i} style={{ marginBottom: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
                 <Text style={{ fontWeight: 'bold', fontSize: 10.5 }}>{exp.company}</Text>
                 <Text style={{ fontSize: 8.5, color: '#666' }}>{exp.startDate} - {exp.current ? 'Presente' : exp.endDate}</Text>

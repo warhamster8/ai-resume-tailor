@@ -97,7 +97,7 @@ export async function POST(req: Request) {
         },
       },
       experience: mergedExperience,
-      skills: optimizedContent.skills || baseData.skills,
+      skills: Array.isArray(optimizedContent.skills) ? optimizedContent.skills : (Array.isArray(baseData.skills) ? baseData.skills : []),
       atsScore: optimizedContent.atsScore || 70,
     });
 
