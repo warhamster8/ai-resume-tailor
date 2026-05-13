@@ -33,8 +33,12 @@ REGOLA CRITICA N.1 - DIVIETO ASSOLUTO DI ALLUCINAZIONI:
 REGOLA N.2 - LINGUA OBBLIGATORIA:
 Scrivi l'INTERO CV esclusivamente in lingua ${targetLanguage}.
 
-REGOLA N.3 - JOB TITLE:
-Traduci i titoli interni aziendali in termini standard di settore (es. "Digital Application Professional" -> "IT Project Manager").
+REGOLA ASSOLUTA N.3 - REBRANDING STRATEGICO DEI TITOLI:
+Il nuovo Job Title NON deve essere un semplice copia-incolla del ruolo target. 
+DEVI analizzare attentamente la DESCRIZIONE dell'esperienza per capire cosa ha fatto davvero l'utente. 
+Esempio: Se il titolo originale è "Specialist" ma la descrizione dice che coordinava un team e gestiva budget, il nuovo titolo deve essere "Team Lead" o "Project Manager". 
+Usa la descrizione come fonte di verità per assegnare il titolo di mercato più prestigioso e corretto. 
+NON inventare responsabilità, ma dai il giusto nome a quelle esistenti.
 
 REGOLA N.4 - RISCRITTURA ESPERIENZE:
 Riformula le esperienze usando verbi d'azione e focalizzandoti sui risultati, MA basandoti SOLO sui fatti forniti.`;
