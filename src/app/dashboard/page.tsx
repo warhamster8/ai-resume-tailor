@@ -44,8 +44,7 @@ export default function Dashboard() {
   };
 
   const handlePreview = (cv: any) => {
-    localStorage.setItem('preview_cv', JSON.stringify(cv.optimized_cv_data));
-    router.push('/optimize');
+    router.push(`/optimize?id=${cv.id}`);
   };
 
   if (loading) return (

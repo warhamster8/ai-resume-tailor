@@ -1,17 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ResumeData, OptimizedResumeData } from '@/types/resume';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const ResumePreview = dynamic(() => import('@/components/pdf/ResumePreview'), {
   ssr: false,
 });
 
 export default function OptimizePage() {
-  const router = useRouter();
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <OptimizePageContent />
+    </Suspense>
+  );
+}
+
+function OptimizePageContent() {
+  const searchParams = useSearchParams();
+  const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [baseCV, setBaseCV] = useState<ResumeData | null>(null);
   const [jobTitle, setJobTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -23,28 +37,62 @@ export default function OptimizePage() {
   const [refinementLoading, setRefinementLoading] = useState(false);
 
   useEffect(() => {
-    async function loadBaseCV() {
+    async function loadInitialData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/login');
         return;
       }
 
-      const { data, error: fetchError } = await supabase
+      const id = searchParams.get('id');
+      console.log('OptimizePage: ID found in URL:', id);
+      
+      if (id) {
+        console.log('OptimizePage: Fetching specific record...');
+        const { data, error: fetchError } = await supabase
+          .from('cv_history')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (fetchError) {
+          console.error('OptimizePage: Error fetching record:', fetchError);
+          setError('Impossibile caricare l\'ottimizzazione. Verifica la connessione.');
+        }
+
+        if (data) {
+          console.log('OptimizePage: Data loaded successfully');
+          setOptimizedData(data.optimized_cv_data);
+          setCompanyName(data.target_company);
+          setJobTitle(data.target_position);
+          setJobDescription(data.optimized_cv_data._jobDescription || '');
+          setBaseCV(data.base_cv_data);
+          setCurrentRecordId(data.id);
+          return;
+        } else {
+          console.warn('OptimizePage: No data found for ID:', id);
+        }
+      }
+
+      console.log('OptimizePage: Loading base CV...');
+      const { data: baseData, error: baseError } = await supabase
         .from('cv_history')
         .select('base_cv_data')
         .eq('user_id', user.id)
         .eq('is_base', true)
         .single();
 
-      if (data) {
-        setBaseCV(data.base_cv_data);
-      } else if (fetchError) {
-        console.error('Error loading base CV:', fetchError);
+      if (baseData) {
+        setBaseCV(baseData.base_cv_data);
+      } else if (baseError) {
+        console.error('Error loading base CV:', baseError);
+      }
+      } finally {
+        setInitialLoading(false);
       }
     }
-    loadBaseCV();
-  }, [router]);
+    loadInitialData();
+  }, [router, searchParams]);
 
   const handleOptimize = async () => {
     if (!baseCV || !jobTitle || !jobDescription) {
@@ -76,16 +124,20 @@ export default function OptimizePage() {
       
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('cv_history').insert([
+        const { data: insertedData } = await supabase.from('cv_history').insert([
           {
             user_id: user.id,
             base_cv_data: baseCV,
-            optimized_cv_data: data,
+            optimized_cv_data: { ...data, _jobDescription: jobDescription },
             target_company: companyName,
             target_position: jobTitle,
             is_base: false
           }
-        ]);
+        ]).select();
+
+        if (insertedData && insertedData[0]) {
+          setCurrentRecordId(insertedData[0].id);
+        }
       }
 
       setOptimizedData(data);
@@ -115,12 +167,28 @@ export default function OptimizePage() {
 
       const data = await response.json();
       setOptimizedData(data);
+
+      // Salvataggio del raffinamento su Supabase
+      if (currentRecordId) {
+        await supabase
+          .from('cv_history')
+          .update({ optimized_cv_data: { ...data, _jobDescription: jobDescription } })
+          .eq('id', currentRecordId);
+      }
     } catch (err) {
       console.error('Refinement error:', err);
     } finally {
       setRefinementLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!baseCV) {
     return (
@@ -177,6 +245,12 @@ export default function OptimizePage() {
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Job Description</h2>
             <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={6} className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-xs" placeholder="Incolla l'annuncio..." />
           </section>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-medium">
+              {error}
+            </div>
+          )}
 
           <button onClick={handleOptimize} disabled={isOptimizing} className={`w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all ${isOptimizing ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'}`}>
             {isOptimizing ? "Ottimizzazione..." : "🚀 Genera Ottimizzazione"}
