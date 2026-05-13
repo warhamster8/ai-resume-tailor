@@ -4,6 +4,10 @@ import { PDFParse } from "pdf-parse";
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 const API_KEY = process.env.DEEPSEEK_API_KEY;
 
+export async function GET() {
+  return NextResponse.json({ message: "API Parse is alive and reachable" });
+}
+
 export async function POST(req: Request) {
   if (!API_KEY || API_KEY === "your_deepseek_api_key_here") {
     return NextResponse.json(
