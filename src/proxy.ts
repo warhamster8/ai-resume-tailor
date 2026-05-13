@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Check for Supabase session cookie (any sb- prefixed cookie indicates active session)
   const hasSession = request.cookies.getAll().some(
     (cookie) => cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')
