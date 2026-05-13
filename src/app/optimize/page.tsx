@@ -15,6 +15,13 @@ export default function OptimizePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Controlla se arriviamo dalla dashboard per vedere un CV specifico
+    const cachedCV = localStorage.getItem('preview_cv');
+    if (cachedCV) {
+      setOptimizedData(JSON.parse(cachedCV));
+      localStorage.removeItem('preview_cv'); // Pulizia
+    }
+
     async function fetchBaseCV() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;

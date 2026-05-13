@@ -1,10 +1,10 @@
 'use client';
 
-import { PDFViewer } from '@react-pdf/renderer';
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { OptimizedResumeData } from '@/types/resume';
 import ResumePDF from './ResumePDF';
 import { useState } from 'react';
-import { Download, Layout } from 'lucide-react';
+import { Download, Layout, Loader2 } from 'lucide-react';
 
 interface Props {
   data: OptimizedResumeData;
@@ -27,7 +27,7 @@ export default function ResumePreview({ data }: Props) {
       <div className="bg-background border-b border-border p-4 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium flex items-center gap-2">
-            <Layout className="w-4 h-4" /> Template:
+            <Layout className="w-4 h-4 text-accent" /> Template:
           </span>
           <div className="flex gap-2">
             {templates.map((t) => (
@@ -36,8 +36,8 @@ export default function ResumePreview({ data }: Props) {
                 onClick={() => setSelectedTemplate(t.id)}
                 className={`px-3 py-1 text-xs rounded-full border transition-all ${
                   selectedTemplate === t.id 
-                    ? 'bg-accent text-white border-accent' 
-                    : 'border-border hover:bg-muted'
+                    ? 'bg-accent text-white border-accent shadow-sm' 
+                    : 'border-border hover:bg-muted text-secondary'
                 }`}
               >
                 {t.name}
@@ -45,9 +45,20 @@ export default function ResumePreview({ data }: Props) {
             ))}
           </div>
         </div>
-        <button className="btn-primary flex items-center gap-2">
-          <Download className="w-4 h-4" /> Esporta PDF
-        </button>
+
+        <PDFDownloadLink 
+          document={<ResumePDF data={data} templateId={selectedTemplate} />} 
+          fileName={`CV_Ottimizzato_${data.personalInfo.fullName.replace(/\s+/g, '_')}.pdf`}
+          className="btn-primary flex items-center gap-2 text-sm"
+        >
+          {({ loading }) => (
+            loading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Generazione...</>
+            ) : (
+              <><Download className="w-4 h-4" /> Esporta PDF</>
+            )
+          )}
+        </PDFDownloadLink>
       </div>
 
       <div className="flex-1 bg-muted/50 p-8 flex justify-center">
