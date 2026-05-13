@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError(null);
 
     // Whitelist check
-    const allowedEmails = ['grosso.andrea@gmail.com']; 
+    const allowedEmails = ['grosso.andrea@gmail.com', 'baldi.marzia@gmail.com']; 
     if (!allowedEmails.includes(email.toLowerCase())) {
       setError('Accesso non autorizzato. Questa è una workstation privata.');
       setLoading(false);
